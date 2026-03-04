@@ -63,7 +63,7 @@ class NinValidationController extends Controller
         WHEN 'rejected' THEN 6 
         ELSE 7 
             END
-        ")->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        ")->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         return view('nin.validation', compact('services', 'wallet', 'submissions'));
     }

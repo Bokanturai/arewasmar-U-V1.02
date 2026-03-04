@@ -63,7 +63,7 @@ class IpeController extends Controller
         WHEN 'rejected' THEN 6 
         ELSE 7 
             END
-        ")->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+        ")->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         return view('nin.ipe', compact('services', 'wallet', 'submissions'));
     }
@@ -316,6 +316,10 @@ class IpeController extends Controller
 
             $agentService->update($updateData);
 
+            if ($updateData['status'] === 'failed') {
+                $this->processRefund($agentService);
+            }
+
             if ($request->wantsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => true,
@@ -368,6 +372,10 @@ class IpeController extends Controller
 
                 $submission->update($updateData);
 
+                if (isset($updateData['status']) && $updateData['status'] === 'failed') {
+                    $this->processRefund($submission);
+                }
+
                 Log::info('IPE Clearance Updated via Webhook', [
                     'submission_id' => $submission->id,
                     'identifier' => $identifier,
@@ -407,5 +415,84 @@ class IpeController extends Controller
             'failed', 'rejected', 'error', 'declined', 'invalid', 'no record' => 'failed',
             default => 'pending',
         };
+    }
+
+    // Reuse helper methods
+    private function processRefund(AgentService $agentService)
+    {
+        // Refund logic for IPE
+        if (strtoupper($agentService->service_type) !== 'IPE') return 'not_eligible';
+
+        // Only refund if status is 'failed' (which includes 'cancelled' via mapping)
+        if ($agentService->status !== 'failed') return 'not_failed';
+        
+        $status = 'error';
+        DB::beginTransaction();
+        try {
+            // Lock the service record to prevent concurrent refund attempts
+            $lockedService = AgentService::where('id', $agentService->id)->lockForUpdate()->first();
+            
+            if (!$lockedService || $lockedService->status !== 'failed') {
+                DB::rollBack();
+                return 'not_failed';
+            }
+
+            // Guard against synchronous/inline refunds already applied in store()
+            $originalTx = Transaction::find($lockedService->transaction_id);
+            if ($originalTx && $originalTx->status === 'failed') {
+                DB::rollBack();
+                return 'already_refunded_inline';
+            }
+
+            // Double check in Transaction table to prevent double refund
+            $refundExists = Transaction::where('type', 'refund')
+                ->where(function ($q) use ($lockedService) {
+                    $q->where('description', 'LIKE', "%Request ID #{$lockedService->id}%")
+                      ->orWhere('metadata->original_request_id', $lockedService->id);
+                })->exists();
+
+            if ($refundExists) {
+                DB::rollBack();
+                return 'already_refunded';
+            }
+
+            $user = \App\Models\User::find($lockedService->user_id);
+            if (!$user) {
+                DB::rollBack();
+                return 'error';
+            }
+
+            $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
+            if ($wallet) {
+                $wallet->balance += $lockedService->amount;
+                $wallet->save();
+
+                Transaction::create([
+                    'transaction_ref' => strtoupper(Str::random(12)),
+                    'user_id' => $user->id,
+                    'performed_by' => 'System (Auto)', 
+                    'amount' => $lockedService->amount,
+                    'type' => 'refund',
+                    'status' => 'completed',
+                    'description' => "Refund 100% for failed/cancelled IPE service [{$lockedService->service_field_name}], Request ID #{$lockedService->id}",
+                    'metadata' => [
+                        'original_request_id' => $lockedService->id,
+                        'original_reference' => $lockedService->reference
+                    ],
+                ]);
+
+                // We skip is_refunded update as column doesn't exist
+                $status = 'refunded';
+            } else {
+                DB::rollBack();
+                return 'no_wallet';
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Refund Error for IPE ID {$agentService->id}: " . $e->getMessage());
+            $status = 'error';
+        }
+        return $status;
     }
 }
