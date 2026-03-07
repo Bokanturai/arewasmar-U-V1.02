@@ -179,11 +179,8 @@ class IpeController extends Controller
                         $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
                         $wallet->increment('balance', $servicePrice);
                         
-                        $transaction->update(['status' => 'failed']);
-                        $agentService->update([
-                            'status' => 'failed',
-                            'comment' => $cleanResponse
-                        ]);
+                        $agentService->delete();
+                        $transaction->delete();
 
                         DB::commit();
                         return back()->with('error', 'API Submission Failed: ' . $cleanResponse . '. Your wallet has been refunded.');
@@ -224,11 +221,8 @@ class IpeController extends Controller
                     
                     $errorMessage = $data['message'] ?? 'API Submission Failed';
                     
-                    $transaction->update(['status' => 'failed']);
-                    $agentService->update([
-                        'status' => 'failed',
-                        'comment' => $errorMessage
-                    ]);
+                    $agentService->delete();
+                    $transaction->delete();
 
                     DB::commit();
                     return back()->with('error', 'API Submission Failed: ' . $errorMessage . '. Your wallet has been refunded.');
@@ -257,8 +251,8 @@ class IpeController extends Controller
             try {
                 $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
                 $wallet->increment('balance', $servicePrice);
-                $transaction->update(['status' => 'failed']);
-                $agentService->update(['status' => 'failed', 'comment' => 'Exception during API call: ' . $e->getMessage()]);
+                $agentService->delete();
+                $transaction->delete();
                 DB::commit();
             } catch (\Exception $refundEx) {
                 DB::rollBack();
