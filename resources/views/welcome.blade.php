@@ -676,7 +676,9 @@
                         <li><a href="#">Mobile Apps</a></li>
                         <li><a href="#">BVN & NIN Services</a></li>
                         <li><a href="#">Digital Marketing</a></li>
-                        <li><a href="#">IT Consultancy</a></li>
+                        <li><a href="#">Verifications</a></li>
+                        <li><a href="#">Bill payments</a></li>
+                        <li><a href="#">API services</a></li>
                     </ul>
                 </div>
                 

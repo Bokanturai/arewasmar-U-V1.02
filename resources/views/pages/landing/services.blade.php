@@ -81,8 +81,8 @@
                         <div class="icon-wrapper">
                             <i class="fas fa-headset"></i>
                         </div>
-                        <h3>IT Consultancy</h3>
-                        <p>Expert advice and technical support to help you navigate the complex technology landscape and make informed decisions.</p>
+                         <h3>API Services</h3>
+                         <p>Seamless API integration and technical support to help you connect your systems, streamline workflows, and build scalable, data-driven applications.</p>
                         <a href="#" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
