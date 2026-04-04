@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\KycWelcome;
 
 class ProfileController extends Controller
 {
@@ -88,6 +90,14 @@ class ProfileController extends Controller
             }
 
             $user->update($updateData);
+
+            // Send Welcome Email
+            try {
+                Mail::to($user->email)->send(new KycWelcome($user));
+            } catch (\Exception $e) {
+                // Log error but don't fail the request if email fails
+                \Log::error('Failed to send KYC welcome email: ' . $e->getMessage());
+            }
 
             return redirect()->route('dashboard')->with('success', 'Account successfully! Welcome aboard! 🎉');
         } catch (\Exception $e) {

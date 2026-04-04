@@ -1,51 +1,52 @@
 <x-guest-layout>
     <title>Arewa Smart - {{ $title ?? 'Verify Email' }}</title>
-    <div class="vh-100 d-flex flex-column justify-content-between">
+    
+    <div class="auth-card">
+        <div class="auth-logo">
+            <a href="/">
+                <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo">
+            </a>
+        </div>
 
-        {{-- Main Content --}}
-        <div class="d-flex flex-column justify-content-center align-items-center flex-grow-1 p-4">
-            {{-- Logo + Heading --}}
-            <div class="text-center mb-4">
-                 <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo" class="img-fluid d-block mx-auto"  style="max-width: 100px; height: auto;" >
-                <h2 class="mb-1">Verify Your Email Address</h2>
-                <p class="text-muted mb-4">
-                    Thanks for signing up! Please verify your email address by clicking the link we just sent to your inbox.  
-                    If you didn’t receive the email, you can request another below.
-                </p>
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Verify Email</h2>
+            <p class="text-muted small">Please verify your email to continue</p>
+        </div>
+
+        {{-- Status Message --}}
+        @if (session('status') == 'verification-link-sent')
+            <div class="alert alert-success border-0 shadow-sm mb-4 small">
+                <i class="ti ti-circle-check fs-5 me-2"></i>
+                A new verification link has been sent to your email.
             </div>
+        @endif
 
-            {{-- Status Message --}}
-            @if (session('status') == 'verification-link-sent')
-                <div class="alert alert-success text-center w-100" style="max-width: 400px;">
-                    <i class="ti ti-mail me-1"></i>
-                    A new verification link has been sent to your registered email address.
-                </div>
-            @endif
+        <div class="auth-body">
+            <p class="text-muted small mb-4">
+                Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you?
+            </p>
 
             {{-- Actions --}}
-            <div class="d-flex flex-column align-items-center mt-4 w-100" style="max-width: 400px;">
-                
+            <div class="d-grid gap-2">
                 {{-- Resend Verification Link --}}
-                <form method="POST" action="{{ route('verification.send') }}" class="w-100 mb-3">
+                <form method="POST" action="{{ route('verification.send') }}">
                     @csrf
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="ti ti-refresh me-1"></i> Resend Verification Email
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        Resend Verification Email
                     </button>
                 </form>
 
                 {{-- Log Out --}}
-                <form method="POST" action="{{ route('logout') }}" class="w-100">
+                <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="btn btn-outline-secondary w-100">
-                        <i class="ti ti-logout me-1"></i> Log Out
+                    <button type="submit" class="btn btn-outline-light text-muted border w-100 py-2">
+                        Log Out
                     </button>
                 </form>
             </div>
         </div>
-
-        {{-- Footer --}}
-        <div class="text-center py-3">
-            <p class="text-muted mb-0">&copy; {{ date('Y') }} Arewa Smart</p>
-        </div>
     </div>
+
+    {{-- Footer Text --}}
+    <p class="auth-footer-text">&copy; {{ date('Y') }} Arewa Smart. All rights reserved.</p>
 </x-guest-layout>

@@ -1,98 +1,124 @@
 <x-guest-layout>
     <title>Arewa Smart - {{ $title ?? 'Login' }}</title>
     
-    <form method="POST" action="{{ route('login') }}" class="vh-100 d-flex flex-column justify-content-between">
-        @csrf
+    <div class="auth-card">
+        <div class="auth-logo">
+            <a href="/">
+                <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo">
+            </a>
+        </div>
 
-        <div class="d-flex flex-column justify-content-center align-items-center flex-grow-1 p-4">
-            
-            {{-- Logo + Heading --}}
-            <div class="text-center mb-4">
-                <div class="text-center mb-4">
-             <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo" class="img-fluid d-block mx-auto"  style="max-width: 100px; height: auto;" >
-                 </div>
-                <h2 class="mb-1">Sign In</h2>
-                <p class="text-muted mb-4">Welcome back! Please log in to your account</p>
-                
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Welcome Back</h2>
+            <p class="text-muted small">Please sign in to your account</p>
+        </div>
+
+        <x-auth-session-status class="mb-4 text-center" :status="session('status')" />
+
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+
+            {{-- Email Field --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="email">Email Address</label>
+                <div class="input-group">
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value="{{ old('email') }}" 
+                        required 
+                        autofocus 
+                        placeholder="Enter your email"
+                        class="form-control border-end-0 @error('email') is-invalid @enderror">
+                    <span class="input-group-text border-start-0">
+                        <i class="ti ti-mail"></i>
+                    </span>
+                    @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
 
-
-            <!-- Session Status -->
-           <x-auth-session-status class="mb-4 text-center" :status="session('status')" />
-
-            {{-- Form Fields --}}
-            <div class="w-100" style="max-width: 400px;">
-                
-                {{-- Email Field --}}
-                <div class="mb-3">
-                    <label class="form-label" for="email">Email Address</label>
-                    <div class="input-group">
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            value="{{ old('email') }}" 
-                            required 
-                            autofocus 
-                            autocomplete="username"
-                            class="form-control border-end-0 @error('email') is-invalid @enderror">
-                        <span class="input-group-text border-start-0">
-                            <i class="ti ti-mail"></i>
-                        </span>
-                        @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                {{-- Password Field --}}
-                <div class="mb-3">
-                    <label class="form-label" for="password">Password</label>
-                    <div class="pass-group position-relative">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            required 
-                            autocomplete="current-password"
-                            class="form-control @error('password') is-invalid @enderror">
-                        <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer"></span>
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                {{-- Remember Me + Forgot Password --}}
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="remember_me" name="remember">
-                        <label class="form-check-label" for="remember_me">Remember me</label>
-                    </div>
+            {{-- Password Field --}}
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label fw-semibold mb-0" for="password">Password</label>
                     @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}" class="text-primary small">Forgot Password?</a>
+                        <a href="{{ route('password.request') }}" class="text-primary small fw-bold">Forgot Password?</a>
                     @endif
                 </div>
-
-                {{-- Submit Button --}}
-                <div class="mb-3">
-                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
-                </div>
-
-                {{-- Register Link --}}
-                <div class="text-center">
-                    <p class="mb-0">
-                        Don’t have an account? 
-                        <a href="{{ route('register') }}" class="text-primary fw-semibold">Sign Up</a>
-                    </p>
+                <div class="pass-group position-relative">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required 
+                        placeholder="••••••••"
+                        class="form-control @error('password') is-invalid @enderror">
+                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer text-muted fs-18"></span>
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
-        </div>
 
-        {{-- Footer --}}
-        <div class="text-center py-3">
-            <p class="text-muted mb-0">&copy; {{ date('Y') }} Arewa Smart</p>
-        </div>
-    </form>
+            {{-- Remember Me --}}
+            <div class="mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="remember_me" name="remember">
+                    <label class="form-check-label text-muted small" for="remember_me">Remember my device</label>
+                </div>
+            </div>
 
+            {{-- Submit Button --}}
+            <button type="submit" class="btn btn-primary w-100 mb-3 py-2">Sign In</button>
+
+            {{-- Biometric Login Button --}}
+            <button type="button" id="biometric-login-btn" class="btn btn-outline-primary w-100 mb-4 py-2 d-flex align-items-center justify-content-center">
+                <i class="ti ti-fingerprint me-2 fs-20"></i> Sign in with Biometrics
+            </button>
+
+            {{-- Register Link --}}
+            <div class="text-center">
+                <p class="text-muted small mb-0">
+                    Don't have an account? 
+                    <a href="{{ route('register') }}" class="text-primary fw-bold">Create Account</a>
+                </p>
+            </div>
+        </form>
+    </div>
+
+    {{-- Footer Text --}}
+    <p class="auth-footer-text">&copy; {{ date('Y') }} Arewa Smart. All rights reserved.</p>
+
+    <!-- SweetAlert2 & Biometric Script -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @include('auth.passkey-script')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bioLoginBtn = document.getElementById('biometric-login-btn');
+            if (bioLoginBtn) {
+                bioLoginBtn.addEventListener('click', async function() {
+                    const emailInput = document.getElementById('email');
+                    const email = emailInput ? emailInput.value : null;
+
+                    // Disable button and show loading
+                    const originalContent = bioLoginBtn.innerHTML;
+                    bioLoginBtn.disabled = true;
+                    bioLoginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Initializing...';
+
+                    try {
+                        await webAuthnLogin(email);
+                    } catch (error) {
+                        // webAuthnLogin already handles logging the error, 
+                        // but we need to reset the button state here.
+                        bioLoginBtn.disabled = false;
+                        bioLoginBtn.innerHTML = originalContent;
+                    }
+                });
+            }
+        });
+    </script>
 </x-guest-layout>

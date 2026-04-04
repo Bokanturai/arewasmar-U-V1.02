@@ -91,6 +91,7 @@
             @include('layouts.partials.sidebar')
 
             <div class="page-body">
+                @include('auth.biometric-modal')
                 <div class="container-fluid">
                     @isset($header)
                         <div class="page-title">

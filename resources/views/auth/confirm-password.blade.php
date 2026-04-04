@@ -1,61 +1,52 @@
 <x-guest-layout>
     <title>Arewa Smart - {{ $title ?? 'Confirm Password' }}</title>
-    <form method="POST" action="{{ route('password.confirm') }}" class="vh-100 d-flex flex-column justify-content-between">
-        @csrf
+    
+    <div class="auth-card">
+        <div class="auth-logo">
+            <a href="/">
+                <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo">
+            </a>
+        </div>
 
-        <div class="d-flex flex-column justify-content-center align-items-center flex-grow-1 p-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Confirm Access</h2>
+            <p class="text-muted small">This is a secure area. Please confirm your password.</p>
+        </div>
 
-            {{-- Logo + Heading --}}
-            <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo" class="img-fluid d-block mx-auto"  style="max-width: 100px; height: auto;" >
-                <h2 class="mb-1">Confirm Password</h2>
-                <p class="text-muted mb-4">
-                    This is a secure area of the application. <br>
-                    Please confirm your password before continuing.
-                </p>
-            </div>
+        <form method="POST" action="{{ route('password.confirm') }}">
+            @csrf
 
-             {{-- Password Field --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="password">Password</label>
+            {{-- Password Field --}}
+            <div class="mb-4">
+                <label class="form-label fw-semibold" for="password">Password</label>
                 <div class="pass-group position-relative">
                     <input 
                         type="password" 
                         id="password" 
                         name="password" 
                         required 
-                        autocomplete="new-password"
+                        placeholder="••••••••"
                         class="form-control @error('password') is-invalid @enderror">
-                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer"></span>
+                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer text-muted fs-18"></span>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-
-                {{-- Password Strength Bar --}}
-                <div class="progress mt-2" style="height: 6px;">
-                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar"></div>
-                </div>
-                <small id="passwordStrengthText" class="text-muted"></small>
             </div>
 
-                {{-- Confirm Button --}}
-                <div class="mb-3">
-                    <button type="submit" class="btn btn-primary w-100">Confirm</button>
-                </div>
+            {{-- Confirm Button --}}
+            <button type="submit" class="btn btn-primary w-100 mb-4 py-2">Confirm Identity</button>
 
-                {{-- Back to Login --}}
-                <div class="text-center">
-                    <p class="mb-0">
-                        Need to log in again? 
-                        <a href="{{ route('login') }}" class="text-primary fw-semibold">Sign In</a>
-                    </p>
-                </div>
+            {{-- Register Link --}}
+            <div class="text-center">
+                <p class="text-muted small mb-0">
+                    Need help? 
+                    <a href="{{ route('login') }}" class="text-primary fw-bold">Sign In Again</a>
+                </p>
             </div>
-        </div>
+        </form>
+    </div>
 
-        {{-- Footer --}}
-        <div class="text-center py-3">
-            <p class="text-muted mb-0">&copy; {{ date('Y') }} Arewa Smart</p>
-        </div>
-    </form>
+    {{-- Footer Text --}}
+    <p class="auth-footer-text">&copy; {{ date('Y') }} Arewa Smart. All rights reserved.</p>
 </x-guest-layout>

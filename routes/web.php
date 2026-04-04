@@ -186,20 +186,30 @@ Route::get('/', function () {return view('welcome');});
         Route::post('/tin-reg/validate', [App\Http\Controllers\Agency\TinRegistrationController::class, 'validateTin'])->name('tin.validate');
         Route::post('/tin-reg/download', [App\Http\Controllers\Agency\TinRegistrationController::class, 'downloadSlip'])->name('tin.download');
 
-        Route::prefix('bvn')->group(function () {
-
-        // BVN User route
-        Route::get('/', [BvnUserController::class, 'index'])->name('bvn.index');
-        Route::post('/store', [BvnUserController::class, 'store'])->name('bvn.store');
-
-
-        // nin Modification Routes
-        Route::prefix('nin-modification')->group(function () {
-            Route::get('/', [NinModificationController::class, 'index'])->name('nin-modification');
-            Route::post('/', [NinModificationController::class, 'store'])->name('nin-modification.store');
+        // Support Routes
+        Route::prefix('support')->group(function () {
+            Route::get('/', [SupportController::class, 'index'])->name('support.index');
+            Route::get('/create', [SupportController::class, 'create'])->name('support.create');
+            Route::post('/store', [SupportController::class, 'store'])->name('support.store');
+            Route::get('/{ticket}', [SupportController::class, 'show'])->name('support.show');
+            Route::post('/{ticket}/reply', [SupportController::class, 'reply'])->name('support.reply');
+            Route::get('/{ticket}/updates', [SupportController::class, 'fetchUpdates'])->name('support.updates');
         });
 
-        // NIN Validation & IPE Routes
+        Route::prefix('bvn')->group(function () {
+
+            // BVN User route
+            Route::get('/', [BvnUserController::class, 'index'])->name('bvn.index');
+            Route::post('/store', [BvnUserController::class, 'store'])->name('bvn.store');
+
+
+            // nin Modification Routes
+            Route::prefix('nin-modification')->group(function () {
+                Route::get('/', [NinModificationController::class, 'index'])->name('nin-modification');
+                Route::post('/', [NinModificationController::class, 'store'])->name('nin-modification.store');
+            });
+
+            // NIN Validation & IPE Routes
             // NIN Validation
             Route::controller(NinValidationController::class)->prefix('nin-validation')->name('nin-validation.')->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -221,16 +231,6 @@ Route::get('/', function () {return view('welcome');});
                 Route::get('/', 'index')->name('index');
                 Route::post('/store', 'store')->name('store');
             });
-    
-        // Support Routes
-        Route::prefix('support')->group(function () {
-            Route::get('/', [SupportController::class, 'index'])->name('support.index');
-            Route::get('/create', [SupportController::class, 'create'])->name('support.create');
-            Route::post('/store', [SupportController::class, 'store'])->name('support.store');
-            Route::get('/{ticket}', [SupportController::class, 'show'])->name('support.show');
-            Route::post('/{ticket}/reply', [SupportController::class, 'reply'])->name('support.reply');
-            Route::get('/{ticket}/updates', [SupportController::class, 'fetchUpdates'])->name('support.updates');
-        });
 
 
         /*

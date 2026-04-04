@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\ProcessAISupportReply;
+
 
 class SupportController extends Controller
 {
@@ -63,8 +65,16 @@ class SupportController extends Controller
             'is_admin_reply' => false,
         ]);
 
-        // Send Auto Reply
-        $this->sendAutoReply($ticket);
+        // Trigger AI Support Reply Synchronously (No Queue)
+        ProcessAISupportReply::dispatchSync($ticket);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Ticket created successfully!',
+                'redirect_url' => route('support.show', $ticket->ticket_reference)
+            ]);
+        }
 
         return redirect()->route('support.show', $ticket->ticket_reference)
             ->with('success', 'Ticket created successfully! Ticket ID: ' . $ticket->ticket_reference);
@@ -105,7 +115,7 @@ class SupportController extends Controller
             $attachmentPath = rtrim(config('app.url'), '/') . '/uploads/support/' . $fileName;
         }
 
-        SupportMessage::create([
+        $message = SupportMessage::create([
             'support_ticket_id' => $ticket->id,
             'user_id' => Auth::id(),
             'message' => $request->message,
@@ -115,46 +125,30 @@ class SupportController extends Controller
 
         $ticket->update(['status' => 'customer_reply', 'updated_at' => now()]);
 
-        // Send Auto Reply
-        $this->sendAutoReply($ticket);
-
-        if ($request->wantsJson()) {
+        // Trigger AI Support Reply Synchronously (No Queue)
+        ProcessAISupportReply::dispatchSync($ticket);
+ 
+        if ($request->ajax() || $request->wantsJson()) {
             // Eager load user for the response
             $message = SupportMessage::with('user')->find($message->id);
+            
+            // Get the AI reply if it exists (since we ran synchronously)
+            $aiReply = SupportMessage::where('support_ticket_id', $ticket->id)
+                ->where('is_admin_reply', true)
+                ->latest()
+                ->first();
+
             return response()->json([
                 'success' => true,
                 'message' => $message,
+                'ai_reply' => $aiReply,
                 'ticket_status' => $ticket->status
             ]);
         }
-
+ 
         return back()->with('success', 'Reply sent successfully.');
     }
 
-    private function sendAutoReply(SupportTicket $ticket)
-    {
-        // Only send auto reply if this is the first message
-        $messageCount = SupportMessage::where('support_ticket_id', $ticket->id)->count();
-        if ($messageCount > 1) {
-            return;
-        }
-
-        $now = now();
-        $isWeekend = $now->isSaturday() || $now->isSunday();
-        
-        if ($isWeekend) {
-            $message = "Thank you for reaching out. Please note that our support team is currently unavailable as we don't work on weekends. We will attend to your request on the next working day.\n\nFor urgent matters, please chat with us on WhatsApp: https://wa.me/2349110501995";
-        } else {
-            $message = "Thank you for contacting us. Your request has been received, and a support agent will respond to you shortly. Please hold on.";
-        }
-
-        SupportMessage::create([
-            'support_ticket_id' => $ticket->id,
-            'user_id' => null, // System message
-            'message' => $message,
-            'is_admin_reply' => true,
-        ]);
-    }
 
     public function fetchUpdates(Request $request, $reference)
     {

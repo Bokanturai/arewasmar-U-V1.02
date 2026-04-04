@@ -137,34 +137,22 @@ class NINverificationController extends Controller
 
             $signature = signatureHelper::generate_signature($data, config('keys.private2'));
 
-            $url = env('Domain') . '/api/validator-service/open/nin/inquire';
+            $apiUrl = env('Domain') . '/api/validator-service/open/nin/inquire';
             $token = env('BEARER');
 
-            $headers = [
-                'Accept: application/json, text/plain, */*',
-                'CountryCode: NG',
-                "Signature: $signature",
-                'Content-Type: application/json',
-                "Authorization: Bearer $token",
-            ];
+            $response = Http::withHeaders([
+                'Accept' => 'application/json, text/plain, */*',
+                'CountryCode' => 'NG',
+                'Signature' => $signature,
+            ])->withToken($token)
+              ->post($apiUrl, $data);
 
-            // Initialize cURL
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-
-            $response = curl_exec($ch);
-
-            if (curl_errno($ch)) {
-                throw new \Exception('cURL Error: ' . curl_error($ch));
+            if ($response->failed()) {
+                throw new \Exception('API Error: ' . ($response->json('respDescription') ?? $response->reason()));
             }
-            curl_close($ch);
 
-            $data = json_decode($response, true);
-            $respCode = $data['respCode'] ?? 'UNKNOWN';
+            $responseData = $response->json();
+            $respCode = $responseData['respCode'] ?? 'UNKNOWN';
 
             // Handle Response Codes
             if ($respCode === '00000000') {

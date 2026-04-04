@@ -1,191 +1,197 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<head>
+    @include('layouts.partials.head')
+    <style>
+        :root {
+            /* Project Branding Tokens */
+            --auth-primary: #d37102; 
+            --auth-primary-rgb: 211, 113, 2;
+            --auth-bg: #f8f9fa; 
+            --auth-card-radius: 12px; 
+            --auth-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+            --transition: all 0.3s ease;
+        }
 
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        body.auth-layout {
+            background-color: var(--auth-bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 2rem 1rem;
+            font-family: 'Nunito Sans', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
 
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        .auth-container {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            position: relative;
+            z-index: 1;
+            animation: authFadeIn 0.5s ease-out;
+            padding: 2rem 0;
+        }
 
-        {{-- Add your custom assets for the registration page here if they aren't included by @vite --}}
-        {{-- For this example, I'll assume your custom CSS is not managed by Vite and must be included separately --}}
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/img/logo/app-logo.png') }}">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/img/logo/app-logo.png') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/icons/feather/feather.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/tabler-icons/tabler-icons.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/fontawesome/css/fontawesome.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/fontawesome/css/all.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-    </head>
+        @keyframes authFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    <body class="bg-white">
-        <div id="global-loader" style="display: none;">
-            <div class="page-loader"></div>
-        </div>
-        <div class="main-wrapper">
-            <div class="container-fuild">
-                <div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
-                    <div class="row">
-                        {{-- The left-side image/text column is static and placed here --}}
-                        <div class="col-lg-5">
-                            <div class="login-background position-relative d-lg-flex align-items-center justify-content-center d-none flex-wrap vh-100">
-                                <div class="bg-overlay-img">
-                                 </div>
-                                <div class="authentication-card w-100">
-                                    <div class="authen-overlay-item border w-100">
-                                        <h1 class="text-white fs-20 fw-semibold text-center">Happy Ramadan to all the Muslim Ummah around the globe! 🌙✨</h1>
-                                        <div class="my-4 mx-auto authen-overlay-img">
-                                            <img src="{{ asset('assets/img/landing/user3.png') }}" alt="Img">
-                                        </div>
-                                        <div>
-                                            <p class="text-white fs-20 fw-semibold text-center">May Allah accept our fasting, prayers, charity, and all acts of ibadah, and grant us Jannah. <br>Ramadan Mubarak! 🤲🌙</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+        .auth-card {
+            background: #ffffff;
+            border-radius: var(--auth-card-radius);
+            box-shadow: var(--auth-card-shadow);
+            padding: 2.5rem;
+            border: none;
+            position: relative;
+        }
 
-                        {{-- The right-side form column contains the slot for the actual form --}}
-                        <div class="col-lg-7 col-md-12 col-sm-12">
-                            <div class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap">
-                                <div class="col-md-7 mx-auto vh-100">
-                                    {{ $slot }} {{-- This is where your register form content will go --}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
-        <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
-        <script src="{{ asset('assets/js/feather.min.js') }}"></script>
-        <script src="{{ asset('assets/js/script.js') }}"></script>
-    </body>
-</html>
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--auth-primary);
+            border-top-left-radius: var(--auth-card-radius);
+            border-top-right-radius: var(--auth-card-radius);
+        }
 
-{{-- JavaScript Validation --}}
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-logo img {
+            max-width: 110px;
+            height: auto;
+        }
+
+        /* Mobile Responsiveness Refinements */
+        @media (max-width: 768px) {
+            body.auth-layout {
+                padding: 1.5rem 0.75rem;
+            }
+            .auth-card {
+                padding: 1.5rem;
+            }
+            .auth-container {
+                max-width: 100%;
+            }
+        }
+
+        /* Project-specific UI overrides */
+        .form-control {
+            border-radius: 8px;
+            padding: 0.6rem 0.9rem;
+            border-color: #e2e8f0;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--auth-primary);
+            box-shadow: 0 0 0 3px rgba(var(--auth-primary-rgb), 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--auth-primary) !important;
+            border-color: var(--auth-primary) !important;
+            padding: 0.65rem 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .text-primary {
+            color: var(--auth-primary) !important;
+        }
+
+        .auth-footer-text {
+            color: #64748b;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+
+<body class="auth-layout">
+    <div id="global-loader" style="display: none;">
+        <div class="page-loader"></div>
+    </div>
+
+    <div class="auth-container">
+        {{ $slot }}
+    </div>
+
+    {{-- Modal stack is here at the root of body --}}
+    @stack('modals')
+
+    <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('assets/js/feather.min.js') }}"></script>
+    <script src="{{ asset('assets/js/script.js') }}"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            
-            // --- Global Scripts ---
-
-            // Password Toggle
+            // Toggle Password
             document.querySelectorAll('.toggle-password').forEach(toggle => {
                 toggle.addEventListener('click', function () {
-                    const input = this.closest('.pass-group').querySelector('input');
+                    const group = this.closest('.pass-group') || this.parentElement;
+                    const input = group.querySelector('input');
                     if (input) {
                         const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
                         input.setAttribute('type', type);
-                        
                         this.classList.toggle('ti-eye');
                         this.classList.toggle('ti-eye-off');
                     }
                 });
             });
 
-            // Submit Button Loading State
+            // Loading state
             document.querySelectorAll('form').forEach(form => {
-                const submitButton = form.querySelector('button[type="submit"]');
-                if (submitButton) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
                     form.addEventListener('submit', function () {
-                        // Only disable if form is valid (though native validation might stop it, 
-                        // this event fires usually when submit happens)
-                        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
-                        submitButton.disabled = true;
+                        if (form.checkValidity()) {
+                            submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...`;
+                            submitBtn.disabled = true;
+                        }
                     });
                 }
             });
 
-            // --- Specific Validation Scripts (Safeguarded) ---
-
-            const email = document.getElementById('email');
-            const emailError = document.getElementById('emailError');
-            const password = document.getElementById('password');
-            const confirmPassword = document.getElementById('password_confirmation');
-            const passwordStrengthBar = document.getElementById('passwordStrengthBar');
-            const passwordStrengthText = document.getElementById('passwordStrengthText');
-            const passwordMatchError = document.getElementById('passwordMatchError');
-
-            // Email Validation
-            if (email && emailError) {
-                email.addEventListener('input', () => {
-                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailPattern.test(email.value.trim())) {
-                        emailError.classList.remove('d-none');
-                    } else {
-                        emailError.classList.add('d-none');
-                    }
-                });
-            }
-
-            // Password Strength
-            if (password && passwordStrengthBar && passwordStrengthText) {
-                password.addEventListener('input', () => {
-                    const val = password.value;
+            // Strength bar
+            const pwdInp = document.getElementById('password');
+            const bar = document.getElementById('passwordStrengthBar');
+            const txt = document.getElementById('passwordStrengthText');
+            if (pwdInp && bar) {
+                pwdInp.addEventListener('input', () => {
+                    const val = pwdInp.value;
                     let strength = 0;
-
                     if (val.length >= 8) strength++;
                     if (/[A-Z]/.test(val)) strength++;
-                    if (/[a-z]/.test(val)) strength++;
                     if (/[0-9]/.test(val)) strength++;
                     if (/[^A-Za-z0-9]/.test(val)) strength++;
-                    if (val.length >= 12) strength++;
-
-                    let width = 0, color = '', label = '';
-
-                    switch (strength) {
-                        case 0: 
-                            width = 0; 
-                            color = 'bg-secondary';
-                            label = 'Time to create something special! 🎯'; 
-                            break;
-                        case 1: 
-                            width = 20; 
-                            color = 'bg-danger'; 
-                            label = 'Getting started! Add some magic to make it stronger ✨'; 
-                            break;
-                        case 2: 
-                            width = 40; 
-                            color = 'bg-warning'; 
-                            label = 'Nice progress! Mix it up a bit more! 🌟'; 
-                            break;
-                        case 3: 
-                            width = 60; 
-                            color = 'bg-info'; 
-                            label = 'Looking good! Almost fortress-level security! 🏰'; 
-                            break;
-                        case 4: 
-                            width = 80; 
-                            color = 'bg-success'; 
-                            label = 'Excellent! Your password is getting super strong! 💪'; 
-                            break;
-                        case 5: 
-                            width = 100; 
-                            color = 'bg-success'; 
-                            label = 'Perfect! Your password is now fortress-level secure! 🔒'; 
-                            break;
-                    }
-
-                    passwordStrengthBar.style.width = width + '%';
-                    passwordStrengthBar.className = 'progress-bar ' + color;
-                    passwordStrengthText.textContent = label;
-                });
-            }
-
-            // Password Match
-            if (confirmPassword && password && passwordMatchError) {
-                confirmPassword.addEventListener('input', () => {
-                    if (confirmPassword.value && confirmPassword.value !== password.value) {
-                        passwordMatchError.classList.remove('d-none');
-                    } else {
-                        passwordMatchError.classList.add('d-none');
-                    }
+                    let w = strength * 25;
+                    let c = 'bg-danger';
+                    if (strength == 2) c = 'bg-warning';
+                    if (strength == 3) c = 'bg-info';
+                    if (strength == 4) c = 'bg-success';
+                    bar.style.width = w + '%';
+                    bar.className = 'progress-bar ' + c;
                 });
             }
         });
     </script>
+</body>
+</html>

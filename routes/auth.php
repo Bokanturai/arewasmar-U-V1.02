@@ -9,6 +9,8 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\WebAuthn\WebAuthnRegisterController;
+use App\Http\Controllers\WebAuthn\WebAuthnLoginController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -31,8 +33,10 @@ Route::middleware('guest')->group(function () {
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
         ->name('password.reset');
 
-    Route::post('reset-password', [NewPasswordController::class, 'store'])
-        ->name('password.store');
+    Route::post('webauthn/login/options', [WebAuthnLoginController::class, 'options'])
+        ->name('webauthn.login.options');
+    Route::post('webauthn/login', [WebAuthnLoginController::class, 'login'])
+        ->name('webauthn.login');
 });
 
 Route::middleware('auth')->group(function () {
@@ -56,4 +60,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // WebAuthn Registration Routes
+    Route::post('webauthn/register/options', [WebAuthnRegisterController::class, 'options'])
+        ->name('webauthn.register.options');
+    Route::post('webauthn/register', [WebAuthnRegisterController::class, 'register'])
+        ->name('webauthn.register');
 });

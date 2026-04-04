@@ -1,25 +1,26 @@
 <x-guest-layout>
     <title>Arewa Smart - {{ $title ?? 'Register' }}</title>
-    <form method="POST" action="{{ route('register') }}" class="vh-100 d-flex flex-column justify-content-between">
-        @csrf
-
-        {{-- Main Section --}}
-        <div class="d-flex flex-column justify-content-center align-items-center flex-grow-1 p-4">
-            
-            {{-- Logo + Heading --}}
-            <div class="text-center mb-4">
-               <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo" class="img-fluid d-block mx-auto"  style="max-width: 100px; height: auto;" >
-                <h2 class="mb-1">Create Account</h2>
-                <p class="text-muted mb-4">Please enter your details to sign up</p>
-            </div>
-           
-
-               <!-- Session Status -->
-             <x-auth-session-status class="mb-4 text-center" :status="session('status')" />
     
+    <div class="auth-card">
+        <div class="auth-logo">
+            <a href="/">
+                <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo">
+            </a>
+        </div>
+
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Create Account</h2>
+            <p class="text-muted small">Join Arewa Smart today and start your journey</p>
+        </div>
+
+        <x-auth-session-status class="mb-4 text-center" :status="session('status')" />
+
+        <form method="POST" action="{{ route('register') }}">
+            @csrf
+
             {{-- Email Field --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="email">Email Address</label>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="email">Email Address</label>
                 <div class="input-group">
                     <input 
                         type="email" 
@@ -27,7 +28,7 @@
                         name="email" 
                         value="{{ old('email') }}" 
                         required 
-                        autocomplete="username"
+                        placeholder="name@example.com"
                         class="form-control border-end-0 @error('email') is-invalid @enderror">
                     <span class="input-group-text border-start-0">
                         <i class="ti ti-mail"></i>
@@ -36,19 +37,20 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <small id="emailError" class="text-danger d-none">Please enter a valid email address.</small>
+                <small id="emailError" class="text-danger d-none mt-1">Please enter a valid email address.</small>
             </div>
+
             {{-- Referral Code Field (Optional) --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="referral_code">Referral Code (Optional)</label>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="referral_code">Referral Code (Optional)</label>
                 <div class="input-group">
                     <input 
                         type="text" 
                         id="referral_code" 
                         name="referral_code" 
                         value="{{ old('referral_code', request()->query('ref')) }}" 
-                        class="form-control border-end-0 @error('referral_code') is-invalid @enderror"
-                        placeholder="Enter referral code">
+                        placeholder="Enter if any"
+                        class="form-control border-end-0 @error('referral_code') is-invalid @enderror">
                     <span class="input-group-text border-start-0">
                         <i class="ti ti-user-plus"></i>
                     </span>
@@ -58,81 +60,94 @@
                 </div>
             </div>
 
-
             {{-- Password Field --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="password">Password</label>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="password">Password</label>
                 <div class="pass-group position-relative">
                     <input 
                         type="password" 
                         id="password" 
                         name="password" 
                         required 
-                        autocomplete="new-password"
+                        placeholder="••••••••"
                         class="form-control @error('password') is-invalid @enderror">
-                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer"></span>
+                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer text-muted fs-18"></span>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-
-                {{-- Password Strength Bar --}}
-                <div class="progress mt-2" style="height: 6px;">
-                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar"></div>
+                
+                {{-- Password Strength --}}
+                <div class="mt-2">
+                    <div class="progress" style="height: 5px; border-radius: 10px;">
+                        <div id="passwordStrengthBar" class="progress-bar" role="progressbar"></div>
+                    </div>
+                    <small id="passwordStrengthText" class="text-muted mt-1 d-block" style="font-size: 0.75rem;"></small>
                 </div>
-                <small id="passwordStrengthText" class="text-muted"></small>
             </div>
 
             {{-- Confirm Password Field --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="password_confirmation">Confirm Password</label>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="password_confirmation">Confirm Password</label>
                 <div class="pass-group position-relative">
                     <input 
                         type="password" 
                         id="password_confirmation" 
                         name="password_confirmation" 
                         required 
-                        autocomplete="new-password"
+                        placeholder="••••••••"
                         class="form-control @error('password_confirmation') is-invalid @enderror">
-                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer"></span>
+                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer text-muted fs-18"></span>
                     @error('password_confirmation')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <small id="passwordMatchError" class="text-danger d-none">Passwords do not match.</small>
+                <small id="passwordMatchError" class="text-danger d-none mt-1">Passwords do not match.</small>
             </div>
 
             {{-- Terms & Conditions --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <input 
-                    class="form-check-input" 
-                    type="checkbox" 
-                    id="terms" 
-                    name="terms" 
-                    required>
-                <label class="form-check-label" for="terms">
-                    Agree to <a href="#" class="text-primary">Terms & Privacy</a>
-                </label>
+            <div class="mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                    <label class="form-check-label text-muted small" for="terms">
+                        I agree to the <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#termsModal" class="text-primary fw-bold">Terms & Privacy</a>
+                    </label>
+                </div>
             </div>
 
             {{-- Submit Button --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <button type="submit" class="btn btn-primary w-100">Sign Up</button>
-            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-4 py-2">Create Account</button>
 
             {{-- Already have an account --}}
-            <div class="text-center">
-                <p class="mb-0">
+            <div class="auth-container">
+                <p class="text-muted small mb-0">
                     Already have an account? 
-                    <a href="{{ route('login') }}" class="text-primary fw-semibold">Sign In</a>
+                    <a href="{{ route('login') }}" class="text-primary fw-bold">Sign In</a>
                 </p>
             </div>
-        </div>
+        </form>
+    </div>
 
-        {{-- Footer --}}
-        <div class="text-center py-3">
-            <p class="text-muted mb-0">&copy; {{ date('Y') }} Arewa Smart</p>
-        </div>
-    </form>
+    {{-- Footer Text --}}
+    <p class="auth-footer-text">&copy; {{ date('Y') }} Arewa Smart. All rights reserved.</p>
 
-   </x-guest-layout>
+    {{-- Terms Modal --}}
+    @push('modals')
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header bg-primary text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold" id="termsModalLabel">Terms & Conditions</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-white">
+                    @include('auth.partials.terms-content')
+                </div>
+                <div class="modal-footer border-0 bg-light p-3">
+                    <button type="button" class="btn btn-secondary px-4 py-2" style="border-radius: 8px;" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endpush
+</x-guest-layout>

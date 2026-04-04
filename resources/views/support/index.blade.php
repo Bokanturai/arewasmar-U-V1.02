@@ -1,39 +1,104 @@
 <x-app-layout>
     <title>Arewa Smart - Support Dashboard</title>
+    @push('styles')
+        <style>
+            @media (max-width: 768px) {
+                .responsive-table thead {
+                    display: none;
+                }
+
+                .responsive-table,
+                .responsive-table tbody,
+                .responsive-table tr,
+                .responsive-table td {
+                    display: block;
+                    width: 100%;
+                }
+
+                .responsive-table tr {
+                    margin-bottom: 15px;
+                    border: 1px solid #eee;
+                    border-radius: 12px;
+                    padding: 10px;
+                    background: #fdfdfd;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+                }
+
+                .responsive-table td {
+                    text-align: right;
+                    padding-left: 50%;
+                    position: relative;
+                    border-bottom: 1px solid #eee;
+                    min-height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                }
+
+                .responsive-table td:last-child {
+                    border-bottom: 0;
+                }
+
+                .responsive-table td::before {
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 10px;
+                    width: 45%;
+                    font-weight: 600;
+                    text-align: left;
+                    font-size: 0.85rem;
+                    color: #666;
+                }
+
+                .d-mobile-none {
+                    display: none !important;
+                }
+            }
+        </style>
+    @endpush
+
     <div class="page-body">
         <div class="container-fluid">
             <!-- Header -->
             <div class="page-title mb-4">
                 <div class="row align-items-center">
                     <div class="col-sm-6 col-12">
-                        <h3 class="fw-bold text-dark mb-1">Support Dashboard</h3>
-                        <p class="text-muted small mb-0">Manage your support tickets and get help.</p>
-                    </div>
-                    <div class="col-sm-6 col-12 text-end mt-3 mt-sm-0">
-                        <a href="{{ route('support.create') }}" class="btn btn-primary shadow-sm rounded-pill px-4">
-                            <i class="ti ti-plus me-1"></i> Open New Ticket
-                        </a>
+                        <h3 class="fw-semibold text-dark mb-1">AI Support Dashboard</h3>
+                        <p class="text-muted small mb-0">Experience lightning-fast 24/7 support with our intelligent AI
+                            Assistant.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- WhatsApp Banner -->
+            <!-- AI Assistant Banner -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card bg-success text-white shadow border-0 overflow-hidden" style="border-radius: 15px;">
-                        <div class="card-body d-flex align-items-center justify-content-between p-4 bg-gradient-success">
-                            <div class="d-flex align-items-center">
-                                <span class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                    <i class="ti ti-brand-whatsapp fs-2"></i>
-                                </span>
+                    <div class="card bg-primary text-white shadow-sm border-0 rounded-4 overflow-hidden">
+                        <div
+                            class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between p-4">
+                            <div class="d-flex align-items-center mb-3 mb-md-0">
+                                <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3 position-relative shadow-sm"
+                                    style="width: 60px; height: 60px; min-width: 60px;">
+                                    <i class="ti ti-robot fs-1"></i>
+                                    <span
+                                        class="position-absolute bottom-0 end-0 p-1 bg-success border border-2 border-white rounded-circle"
+                                        style="width: 14px; height: 14px; transform: translate(5%, 5%);"
+                                        title="AI Online"></span>
+                                </div>
                                 <div>
-                                    <h5 class="mb-1 fw-bold">Need Immediate Assistance?</h5>
-                                    <p class="mb-0 text-white-50">Our support team is available on WhatsApp for quick resolution.</p>
+                                    <h5 class="mb-1 fw-bold text-white text-uppercase"
+                                        style="letter-spacing: 1px; font-size: 1.1rem;">Premium AI Support Assistant
+                                    </h5>
+                                    <p class="mb-0 text-white-50 small">Powered by advanced AI to solve your issues
+                                        instantly, 24/7. No waiting in line.</p>
                                 </div>
                             </div>
-                            <a href="https://wa.me/+2347037343660" target="_blank" class="btn btn-light text-success fw-bold rounded-pill px-4 shadow-sm">
-                                Chat Now
-                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#createTicketModal"
+                                    class="btn btn-white text-primary fw-bold rounded-pill px-4 shadow-sm d-flex align-items-center transition-all hover-translate-y">
+                                    <i class="ti ti-messages me-2"></i> Chat with AI
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -42,71 +107,85 @@
             <!-- Tickets Table -->
             <div class="row">
                 <div class="col-12">
-                    <div class="card shadow-sm border-0 rounded-3">
-                        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center">
-                            <h5 class="mb-0 fw-bold text-primary"><i class="ti ti-list me-2"></i>Your Support Tickets</h5>
+                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                        <div
+                            class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0 fw-bold text-dark"><i class="ti ti-list me-2 text-primary"></i>Your Support
+                                Tickets</h5>
+                            <span class="badge bg-soft-primary text-primary rounded-pill">{{ $tickets->total() }}
+                                Total</span>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
+                                <table class="table table-hover align-middle mb-0 responsive-table">
                                     <thead class="bg-light">
-                                        <tr class="text-uppercase text-muted small fw-bold" style="letter-spacing: 0.5px;">
-                                            <th class="ps-4" style="width: 5%;">S/N</th>
+                                        <tr class="text-uppercase text-muted small fw-bold"
+                                            style="letter-spacing: 0.5px;">
+                                            <th class="ps-4 d-mobile-none" style="width: 5%;">S/N</th>
                                             <th style="width: 15%;">Ticket ID</th>
                                             <th style="width: 35%;">Subject</th>
                                             <th style="width: 15%;">Status</th>
-                                            <th style="width: 15%;">Last Update</th>
+                                            <th class="d-mobile-none" style="width: 15%;">Last Update</th>
                                             <th class="text-end pe-4" style="width: 15%;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($tickets as $ticket)
-                                            <tr>
-                                                <td class="ps-4 text-muted fw-bold">
-                                                    {{ $tickets->firstItem() + $loop->index }}
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-light text-dark border fw-bold text-uppercase px-2 py-1">
-                                                        {{ $ticket->ticket_reference }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="fw-medium text-dark">{{ Str::limit($ticket->subject, 50) }}</span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge rounded-pill bg-{{ match($ticket->status) {
-                                                        'open' => 'success',
-                                                        'answered' => 'primary',
-                                                        'customer_reply' => 'warning',
-                                                        'closed' => 'secondary',
-                                                        default => 'info'
-                                                    } }} px-3 py-2">
-                                                        {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
-                                                    </span>
-                                                </td>
-                                                <td class="text-muted small">
-                                                    <i class="ti ti-clock me-1"></i>{{ $ticket->updated_at->diffForHumans() }}
-                                                </td>
-                                                <td class="text-end pe-4">
-                                                    <a href="{{ route('support.show', $ticket->ticket_reference) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                        View Chat <i class="ti ti-arrow-right ms-1"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                                                                <tr>
+                                                                                    <td class="ps-4 text-muted fw-bold d-mobile-none" data-label="S/N">
+                                                                                        {{ $tickets->firstItem() + $loop->index }}
+                                                                                    </td>
+                                                                                    <td data-label="Ticket ID">
+                                                                                        <span
+                                                                                            class="badge bg-light text-dark border fw-bold text-uppercase px-2 py-1">
+                                                                                            {{ $ticket->ticket_reference }}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td data-label="Subject">
+                                                                                        <span
+                                                                                            class="fw-medium text-dark">{{ Str::limit($ticket->subject, 40) }}</span>
+                                                                                    </td>
+                                                                                    <td data-label="Status">
+                                                                                        <span class="badge rounded-pill bg-{{ match ($ticket->status) {
+                                                'open' => 'success',
+                                                'answered' => 'primary',
+                                                'customer_reply' => 'warning',
+                                                'closed' => 'secondary',
+                                                default => 'info'
+                                            } }} px-3 py-2">
+                                                                                            {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td class="text-muted small d-mobile-none" data-label="Last Update">
+                                                                                        <i
+                                                                                            class="ti ti-clock me-1"></i>{{ $ticket->updated_at->diffForHumans() }}
+                                                                                    </td>
+                                                                                    <td class="text-end pe-4" data-label="Action">
+                                                                                        <a href="{{ route('support.show', $ticket->ticket_reference) }}"
+                                                                                            class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                                                            View <i class="ti ti-arrow-right ms-1"></i>
+                                                                                        </a>
+                                                                                    </td>
+                                                                                </tr>
                                         @empty
                                             <tr>
                                                 <td colspan="6" class="text-center py-5">
-                                                    <div class="empty-state">
-                                                        <div class="mb-3">
-                                                            <div class="avatar bg-light text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                                    <div class="empty-state py-4">
+                                                        <div class="mb-4">
+                                                            <div class="avatar bg-soft-primary text-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                                                                style="width: 100px; height: 100px; background-color: rgba(var(--bs-primary-rgb), 0.1);">
                                                                 <i class="ti ti-ticket fs-1"></i>
                                                             </div>
                                                         </div>
-                                                        <h5 class="fw-bold text-dark">No Tickets Found</h5>
-                                                        <p class="text-muted mb-3">You haven't created any support tickets yet.</p>
-                                                        <a href="{{ route('support.create') }}" class="btn btn-primary rounded-pill px-4">
-                                                            Create Your First Ticket
-                                                        </a>
+                                                        <h4 class="fw-bold text-dark mb-2">No Tickets Found</h4>
+                                                        <p class="text-muted mb-4 mx-auto" style="max-width: 300px;">You
+                                                            haven't created any support tickets yet. Our AI is ready to help
+                                                            whenever you need it.</p>
+                                                        <button type="button" data-bs-toggle="modal"
+                                                            data-bs-target="#createTicketModal"
+                                                            class="btn btn-primary rounded-pill px-4 py-2 shadow-sm">
+                                                            <i class="ti ti-plus me-1"></i> Create Your First Ticket
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -115,12 +194,138 @@
                                 </table>
                             </div>
                         </div>
-                        <div class="card-footer bg-white border-top-0 py-3">
-                            {{ $tickets->links() }}
-                        </div>
+                        @if($tickets->hasPages())
+                            <div class="card-footer bg-white border-top py-3">
+                                {{ $tickets->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal fade" id="createTicketModal" tabindex="-1" aria-labelledby="createTicketModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-primary text-white border-bottom-0 py-3">
+                    <h5 class="modal-title fw-bold" id="createTicketModalLabel">
+                        <i class="ti ti-message-dots me-2"></i>Open New Support Ticket
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="createTicketForm" action="{{ route('support.store') }}" method="POST"
+                    enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Subject <span
+                                    class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i
+                                        class="ti ti-edit text-primary"></i></span>
+                                <input type="text" name="subject" class="form-control border-start-0 ps-0"
+                                    placeholder="e.g., Payment Issue, Technical Error" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Message <span
+                                    class="text-danger">*</span></label>
+                            <textarea name="message" class="form-control" rows="5"
+                                placeholder="Please describe your issue in detail..." required
+                                style="border-radius: 12px;"></textarea>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold text-dark">Attachment <span
+                                    class="text-muted small fw-normal">(Optional)</span></label>
+                            <input type="file" name="attachment" class="form-control border-dashed"
+                                accept=".jpg,.jpeg,.png,.pdf" style="border-style: dashed;">
+                            <small class="text-muted d-block mt-2">Max size: 2MB. Only JPG, PNG, or PDF allowed.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm"
+                            id="submitTicketBtn">
+                            <span class="spinner-border spinner-border-sm d-none me-2" role="status"
+                                aria-hidden="true"></span>
+                            Submit Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.getElementById('createTicketForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const form = this;
+                const submitBtn = document.getElementById('submitTicketBtn');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const formData = new FormData(form);
+
+                // Show loading state
+                submitBtn.disabled = true;
+                spinner.classList.remove('d-none');
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonColor: '#F26522',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = data.redirect_url;
+                            });
+                        } else {
+                            // Handle validation errors if any
+                            let errorMsg = 'Something went wrong. Please try again.';
+                            if (data.errors) {
+                                errorMsg = Object.values(data.errors).flat().join('\n');
+                            }
+                            Swal.fire({
+                                title: 'Error!',
+                                text: errorMsg,
+                                icon: 'error',
+                                confirmButtonColor: '#F26522'
+                            });
+                            submitBtn.disabled = false;
+                            spinner.classList.add('d-none');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'An unexpected error occurred. Please try again later.',
+                            icon: 'error',
+                            confirmButtonColor: '#F26522'
+                        });
+                        submitBtn.disabled = false;
+                        spinner.classList.add('d-none');
+                    });
+            });
+        </script>
+    @endpush
 </x-app-layout>

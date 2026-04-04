@@ -1,109 +1,103 @@
 <x-guest-layout>
-    <title>Arewa Smart - {{ $title ?? 'Password Reset' }}</title>
-    <form method="POST" action="{{ route('password.store') }}" class="vh-100 d-flex flex-column justify-content-between">
-        @csrf
+    <title>Arewa Smart - {{ $title ?? 'Reset Password' }}</title>
+    
+    <div class="auth-card">
+        <div class="auth-logo">
+            <a href="/">
+                <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo">
+            </a>
+        </div>
 
-        {{-- Password Reset Token --}}
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold mb-1">Set New Password</h2>
+            <p class="text-muted small">Regain access to your account</p>
+        </div>
 
-        <div class="d-flex flex-column justify-content-center align-items-center flex-grow-1 p-4">
+        <form method="POST" action="{{ route('password.store') }}">
+            @csrf
 
-            {{-- Logo + Heading --}}
-            <div class="text-center mb-4">
-                <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Arewa Smart Logo" class="img-fluid d-block mx-auto"  style="max-width: 100px; height: auto;" >
-                <h2 class="mb-1">Reset Password</h2>
-                <p class="text-muted mb-4">
-                    Enter your new password below to reset your account access.
-                </p>
+            {{-- Password Reset Token --}}
+            <input type="hidden" name="token" value="{{ $request->route('token') }}">
+
+            {{-- Email Address --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="email">Email Address</label>
+                <div class="input-group">
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        value="{{ old('email', $request->email) }}" 
+                        required 
+                        readonly 
+                        class="form-control border-end-0 @error('email') is-invalid @enderror">
+                    <span class="input-group-text border-start-0">
+                        <i class="ti ti-mail"></i>
+                    </span>
+                    @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
 
-            {{-- Form Fields --}}
-            <div class="w-100" style="max-width: 400px;">
-                
-                {{-- Email Address --}}
-                <div class="mb-3">
-                    <label class="form-label" for="email">Email Address</label>
-                    <div class="input-group">
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            value="{{ old('email', $request->email) }}" 
-                            required 
-                            autofocus 
-                            autocomplete="username"
-                            class="form-control border-end-0 @error('email') is-invalid @enderror">
-                        <span class="input-group-text border-start-0">
-                            <i class="ti ti-mail"></i>
-                        </span>
-                        @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-               {{-- Password Field --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="password">Password</label>
+            {{-- Password Field --}}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="password">New Password</label>
                 <div class="pass-group position-relative">
                     <input 
                         type="password" 
                         id="password" 
                         name="password" 
                         required 
-                        autocomplete="new-password"
+                        placeholder="••••••••"
                         class="form-control @error('password') is-invalid @enderror">
-                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer"></span>
+                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer text-muted fs-18"></span>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-
-                {{-- Password Strength Bar --}}
-                <div class="progress mt-2" style="height: 6px;">
-                    <div id="passwordStrengthBar" class="progress-bar" role="progressbar"></div>
+                
+                {{-- Password Strength --}}
+                <div class="mt-2">
+                    <div class="progress" style="height: 5px; border-radius: 10px;">
+                        <div id="passwordStrengthBar" class="progress-bar" role="progressbar"></div>
+                    </div>
+                    <small id="passwordStrengthText" class="text-muted mt-1 d-block" style="font-size: 0.75rem;"></small>
                 </div>
-                <small id="passwordStrengthText" class="text-muted"></small>
             </div>
 
             {{-- Confirm Password Field --}}
-            <div class="mb-3 w-100" style="max-width: 400px;">
-                <label class="form-label" for="password_confirmation">Confirm Password</label>
+            <div class="mb-4">
+                <label class="form-label fw-semibold" for="password_confirmation">Confirm Password</label>
                 <div class="pass-group position-relative">
                     <input 
                         type="password" 
                         id="password_confirmation" 
                         name="password_confirmation" 
                         required 
-                        autocomplete="new-password"
+                        placeholder="••••••••"
                         class="form-control @error('password_confirmation') is-invalid @enderror">
-                    <span class="ti toggle-passwords ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer"></span>
+                    <span class="ti toggle-password ti-eye-off position-absolute end-0 top-50 translate-middle-y me-3 cursor-pointer text-muted fs-18"></span>
                     @error('password_confirmation')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-                <small id="passwordMatchError" class="text-danger d-none">Passwords do not match.</small>
+                <small id="passwordMatchError" class="text-danger d-none mt-1">Passwords do not match.</small>
             </div>
 
+            {{-- Submit Button --}}
+            <button type="submit" class="btn btn-primary w-100 mb-4 py-2">Update Password</button>
 
-                {{-- Submit Button --}}
-                <div class="mb-3">
-                    <button type="submit" class="btn btn-primary w-100">Reset Password</button>
-                </div>
-
-                {{-- Back to Login --}}
-                <div class="text-center">
-                    <p class="mb-0">
-                        Remembered your password? 
-                        <a href="{{ route('login') }}" class="text-primary fw-semibold">Sign In</a>
-                    </p>
-                </div>
+            {{-- Back to Login --}}
+            <div class="text-center">
+                <p class="text-muted small mb-0">
+                    Suddenly remembered? 
+                    <a href="{{ route('login') }}" class="text-primary fw-bold">Return to login</a>
+                </p>
             </div>
-        </div>
+        </form>
+    </div>
 
-        {{-- Footer --}}
-        <div class="text-center py-3">
-            <p class="text-muted mb-0">&copy; {{ date('Y') }} Arewa Smart</p>
-        </div>
-    </form>
+    {{-- Footer Text --}}
+    <p class="auth-footer-text">&copy; {{ date('Y') }} Arewa Smart. All rights reserved.</p>
 </x-guest-layout>
