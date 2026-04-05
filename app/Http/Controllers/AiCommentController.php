@@ -24,9 +24,14 @@ class AiCommentController extends Controller
         $reference = $request->input('reference');
 
         $context = $this->fetchContext($reference);
-        $systemPrompt = $this->getSystemPrompt('summarize', $context);
+        $recentActivity = $this->fetchRecentUserActivity();
+        $fullContext = $context . "\n\nRecent User Activity (Last 5 Days):\n" . $recentActivity;
 
-        $response = $this->callDeepseek($systemPrompt, "Please summarize and explain this administrative comment in a friendly, persuasive tone: \"$comment\"");
+        $user = auth()->user();
+        $userName = $user ? $user->first_name . ' ' . $user->last_name : 'Valued User';
+        $systemPrompt = $this->getSystemPrompt('summarize', $fullContext, $userName);
+
+        $response = $this->callDeepseek($systemPrompt, "Please provide a professional transaction summary and analysis for matches in the last 5 days if visible, otherwise focus on the specific context: \"$comment\"");
 
         return response()->json($response);
     }
@@ -49,9 +54,13 @@ class AiCommentController extends Controller
         $reference = $request->input('reference');
 
         $recordContext = $this->fetchContext($reference);
-        $fullContext = "Admin Comment: \"$comment\"\n\n" . $recordContext;
+        $recentActivity = $this->fetchRecentUserActivity();
+        $fullContext = "Context: \"$comment\"\n\n" . $recordContext . "\n\nRecent User Activity (Last 5 Days):\n" . $recentActivity;
 
-        $systemPrompt = $this->getSystemPrompt('ask', $fullContext);
+        $user = auth()->user();
+        $userName = $user ? $user->first_name . ' ' . $user->last_name : 'Valued User';
+
+        $systemPrompt = $this->getSystemPrompt('ask', $fullContext, $userName);
 
         $response = $this->callDeepseek($systemPrompt, $question, $history);
 
@@ -61,36 +70,44 @@ class AiCommentController extends Controller
     /**
      * Get the system prompt based on the action.
      */
-    private function getSystemPrompt($action, $context = '')
+    private function getSystemPrompt($action, $context = '', $userName = 'Valued User')
     {
+        $today = now()->format('l, d F Y');
         $termsAndConditions = "
         AREWA SMART CORE RULES (TERMS & CONDITIONS):
         1. Nature: Digital service platform & intermediary (NOT a bank).
         2. Refunds: Only for system errors caused by Arewa Smart. NOT for user error or 3rd party failures.
         3. Transactions: Final and Irreversible once processed.
         4. Services: NIN (Validation, Modification, IPE), BVN (Search, Reports), Agency Banking, Airtime/Data.
-        5. Charges: Apply once a request is successfully processed (e.g., successful validation).
-        6. Etiquette: Professional, Nigerian business style, highly respectful.
+        5. Charges: Apply once a request is successfully processed.
+        6. Etiquette: Extremely professional, Nigerian business style, highly respectful.
+        7. Security: You are a VIEW-ONLY assistant. You cannot delete, update, or post new transactions.
         ";
 
-        $basePrompt = "You are 'Arewa Smart AI Guide', a premium, highly professional, and empathetic virtual assistant for Arewa Smart Idea Ltd. 
+        $basePrompt = "You are 'Arewa Smart AI Guide', a premium, highly professional virtual assistant for Arewa Smart Idea Ltd. 
         
-        Your Mission:
-        1. Explain administrative feedback in simple, encouraging terms.
-        2. Build deep TRUST and BELIEF in Arewa Smart's expert administrators.
-        3. Persuade users that even rejections are steps toward success ('Don't worry, we'll fix this!').
-        4. Cross-sell related services (NIN/BVN mods, CAC, etc.) when appropriate.
-        5. Tone: Expert, warm, premium. Use Nigerian business etiquette (respectful but firm on rules).
+        Your Mission & Primary Aim:
+        1. ENCOURAGE the user to do more transactions and explore more services.
+        2. Provide high-level professional summaries of their activity.
+        3. Answer questions respectfully while building trust in Arewa Smart.
+        4. Tone: Expert, warm, premium. Use Nigerian business etiquette.
         
+        Strict Formatting Rules:
+        - Start your response with: \"Dear User $userName,\"
+        - For summaries, include a section: \"The transaction summary for the last 5 days is:\"
+        - List services (e.g., Airtime, Data, Verification, Validation) with their corresponding amounts.
+        - Use HTML line breaks (<br>) to separate different services or sections for easy understanding.
+        - Always end with an encouraging note to do more transactions.
+        
+        Date Context: Today is $today.
         Platform Context: $termsAndConditions
-        
-        Record Context: $context";
+        Record/History Context: $context";
 
         if ($action === 'summarize') {
-            return $basePrompt . "\n\nTask: Summarize the administrator's comment clearly. Focus on what it means for their service and what they should do next. Make them feel valued and confident.";
+            return $basePrompt . "\n\nTask: Summarize the provided transaction information professionally. Be concise but detailed about service types and amounts. Show the user you value their business.";
         }
 
-        return $basePrompt . "\n\nTask: Answer the user's specific question using the provided context and Terms & Conditions. Be direct, helpful, and maintain the premium persona.";
+        return $basePrompt . "\n\nTask: Answer the user's specific question using the provided context. Be helpful, direct, and maintain the professional 'Arewa Smart' persona.";
     }
 
     /**
@@ -103,7 +120,7 @@ class AiCommentController extends Controller
 
         $service = AgentService::where('reference', $reference)->first();
         if ($service) {
-            return "Service: {$service->service_name}\nStatus: {$service->status}\nAmount: {$service->amount}\nDescription: {$service->description}\nReference: {$service->reference}";
+            return "Service: {$service->service_name}\nStatus: {$service->status}\nAmount: {$service->amount}\nDescription: {$service->description}\nRef: {$service->reference}";
         }
 
         $transaction = Transaction::where('transaction_ref', $reference)->first();
@@ -112,6 +129,43 @@ class AiCommentController extends Controller
         }
 
         return "Reference provided ($reference) but no matching service or transaction found.";
+    }
+
+    /**
+     * Fetch the user's recent history for broader AI context.
+     */
+    private function fetchRecentUserActivity()
+    {
+        $userId = auth()->id();
+        if (!$userId) return "No authenticated user.";
+
+        $fiveDaysAgo = now()->subDays(5);
+
+        // Fetch last 30 transactions
+        $transactions = Transaction::where('user_id', $userId)
+            ->where('created_at', '>=', $fiveDaysAgo)
+            ->latest()
+            ->take(30)
+            ->get();
+
+        // Fetch last 30 agent services (NIN/BVN etc)
+        $services = AgentService::where('user_id', $userId)
+            ->where('created_at', '>=', $fiveDaysAgo)
+            ->latest()
+            ->take(30)
+            ->get();
+
+        $output = "TRANSACTION LOGS:\n";
+        foreach ($transactions as $tx) {
+            $output .= "- [{$tx->created_at->format('Y-m-d H:i')}] {$tx->description}: ₦" . number_format($tx->amount, 2) . " [{$tx->status}]\n";
+        }
+
+        $output .= "\nAGENT SERVICES LOGS:\n";
+        foreach ($services as $s) {
+            $output .= "- [{$s->created_at->format('Y-m-d H:i')}] {$s->service_name} ({$s->service_type}): ₦" . number_format($s->amount, 2) . " [{$s->status}]\n";
+        }
+
+        return (empty($transactions) && empty($services)) ? "No activity found in the last 5 days." : $output;
     }
 
     /**
