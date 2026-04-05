@@ -27,7 +27,7 @@ class IpeController extends Controller
         $services = collect();
         $user = Auth::user();
         $role = $user->role ?? 'user';
-        
+
         foreach ($ipeFields as $field) {
             $price = $field->prices()->where('user_type', $role)->value('price') ?? $field->base_price;
             $services->push([
@@ -40,7 +40,7 @@ class IpeController extends Controller
         }
 
         $wallet = Wallet::where('user_id', Auth::id())->first();
-        
+
         $query = AgentService::where('user_id', Auth::id())
             ->where('service_type', 'ipe');
 
@@ -53,17 +53,7 @@ class IpeController extends Controller
             $query->where('status', $request->status);
         }
 
-        $submissions = $query->orderByRaw("
-          CASE status 
-        WHEN 'pending' THEN 1 
-        WHEN 'processing' THEN 2 
-        WHEN 'successful' THEN 3 
-        WHEN 'failed' THEN 4 
-        WHEN 'resolved' THEN 5 
-        WHEN 'rejected' THEN 6 
-        ELSE 7 
-            END
-        ")->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
+        $submissions = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         return view('nin.ipe', compact('services', 'wallet', 'submissions'));
     }
@@ -73,7 +63,7 @@ class IpeController extends Controller
         // 1. Authenticate user (already handled by middleware, but check status)
         $user = Auth::user();
         if (($user->status ?? 'inactive') !== 'active') {
-             return redirect()->back()->with('error', "Your account is currently " . ($user->status ?? 'inactive') . ". Access denied.");
+            return redirect()->back()->with('error', "Your account is currently " . ($user->status ?? 'inactive') . ". Access denied.");
         }
 
         // 2. Validate request
@@ -84,7 +74,7 @@ class IpeController extends Controller
 
         $fieldId = $request->service_field;
         $serviceField = ServiceField::with('service')->findOrFail($fieldId);
-        
+
         // 3. Check service active
         if (($serviceField->is_active ?? 0) != 1 || ($serviceField->service->is_active ?? 0) != 1) {
             return back()->with('error', 'This service is currently unavailable.')->withInput();
@@ -110,7 +100,7 @@ class IpeController extends Controller
             }
 
             // 8. Create transaction (pending)
-            $transactionRef = 'TRX-' . strtoupper(Str::random(10));
+            $transactionRef = 'IP' . strtoupper(Str::random(10));
             $performedBy = $user->first_name . ' ' . $user->last_name;
 
             $transaction = Transaction::create([
@@ -133,7 +123,7 @@ class IpeController extends Controller
 
             // 10. Create service record
             $agentService = AgentService::create([
-                'reference' => 'F-' . strtoupper(Str::random(10)),
+                'reference' => 'IP' . strtoupper(Str::random(10)),
                 'user_id' => $user->id,
                 'service_id' => $serviceField->service_id,
                 'service_field_id' => $serviceField->id,
@@ -143,6 +133,7 @@ class IpeController extends Controller
                 'tracking_id' => $request->tracking_id,
                 'amount' => $servicePrice,
                 'status' => 'processing',
+                'comment' => 'your request is being processing we will update you one the request is treated',
                 'submission_date' => now(),
                 'service_field_name' => $serviceField->field_name,
                 'description' => $request->description ?? $serviceField->field_name,
@@ -158,9 +149,8 @@ class IpeController extends Controller
             return back()->with('error', 'System Error: Failed to initiate request. Please try again.');
         }
 
-        // 12. API Call (Post to s8v)
+        // 12. Information check (Check if we already have this tracking_id in the database)
         try {
-            // Check if we already have this tracking_id in the database
             $existingService = AgentService::where('tracking_id', $request->tracking_id)
                 ->where('service_type', 'ipe')
                 ->where('id', '!=', $agentService->id)
@@ -169,27 +159,9 @@ class IpeController extends Controller
                 ->first();
 
             if ($existingService) {
+                // If we found a record, update the current one with its data
                 $status = $existingService->status;
                 $cleanResponse = $existingService->comment;
-
-                if (in_array($status, ['failed', 'rejected', 'error'])) {
-                    // Refund logic
-                    DB::beginTransaction();
-                    try {
-                        $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
-                        $wallet->increment('balance', $servicePrice);
-                        
-                        $agentService->delete();
-                        $transaction->delete();
-
-                        DB::commit();
-                        return back()->with('error', 'API Submission Failed: ' . $cleanResponse . '. Your wallet has been refunded.');
-                    } catch (\Exception $refundEx) {
-                        DB::rollBack();
-                        Log::critical('IPE Refund Failure (Cache): ' . $refundEx->getMessage(), ['user_id' => $user->id, 'amount' => $servicePrice]);
-                        return back()->with('error', 'API Submission Failed and refund failed. Please contact support immediately.');
-                    }
-                }
 
                 $transaction->update(['status' => 'completed']);
                 $agentService->update([
@@ -197,12 +169,40 @@ class IpeController extends Controller
                     'comment' => $cleanResponse,
                 ]);
 
-                return back()->with('success', 'Request submitted successfully. Status: ' . $status);
+                return back()->with('success', 'IPE Information retrieved successfully from records. Status: ' . $status);
             }
 
+            // --- UPGRADE: Check Provider (s8v) Status API before submitting new record ---
             $apiKey = env('NIN_API_KEY');
+            $statusUrl = 'https://www.s8v.ng/api/clearance/status';
+
+            $statusResponse = Http::post($statusUrl, [
+                'tracking_id' => $request->tracking_id,
+                'token' => $apiKey
+            ]);
+
+            if ($statusResponse->successful()) {
+                $statusData = $statusResponse->json();
+                $apiStatusText = $statusData['status'] ?? $statusData['response'] ?? $statusData['message'] ?? null;
+
+                // Check if the provider already has this record (i.e. it's not a brand new ID)
+                // We proceed to submission only if we get "no record" or null
+                if ($apiStatusText && !Str::contains(strtolower($apiStatusText), ['no record', 'not found', 'error'])) {
+                    $cleanResponse = $this->cleanApiResponse($statusData);
+                    $normStatus = $this->normalizeStatus($apiStatusText);
+
+                    $transaction->update(['status' => 'completed']);
+                    $agentService->update([
+                        'status' => $normStatus,
+                        'comment' => $cleanResponse,
+                    ]);
+
+                    return back()->with('success', 'IPE Information retrieved successfully from provider. Status: ' . $normStatus);
+                }
+            }
+
             $url = 'https://www.s8v.ng/api/clearance';
-            
+
             $payload = [
                 'tracking_id' => $request->tracking_id,
                 'token' => $apiKey,
@@ -218,9 +218,9 @@ class IpeController extends Controller
                 try {
                     $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
                     $wallet->increment('balance', $servicePrice);
-                    
+
                     $errorMessage = $data['message'] ?? 'API Submission Failed';
-                    
+
                     $agentService->delete();
                     $transaction->delete();
 
@@ -340,49 +340,6 @@ class IpeController extends Controller
         }
     }
 
-    public function webhook(Request $request)
-    {
-        $data = $request->all();
-
-        Log::info('IPE Clearance Webhook Received', $data);
-
-        $identifier = $data['tracking_id'] ?? null;
-
-        if ($identifier) {
-            $submission = AgentService::where('tracking_id', $identifier)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if ($submission) {
-                $cleanResponse = $this->cleanApiResponse($data);
-                
-                $updateData = [
-                    'comment' => $cleanResponse,
-                ];
-
-                if (isset($data['status'])) {
-                    $updateData['status'] = $this->normalizeStatus($data['status']);
-                }
-
-                $submission->update($updateData);
-
-                if (isset($updateData['status']) && $updateData['status'] === 'failed') {
-                    $this->processRefund($submission);
-                }
-
-                Log::info('IPE Clearance Updated via Webhook', [
-                    'submission_id' => $submission->id,
-                    'identifier' => $identifier,
-                    'new_status' => $updateData['status'] ?? 'unknown'
-                ]);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Webhook received successfully'
-        ]);
-    }
 
     private function cleanApiResponse($response): string
     {
@@ -402,7 +359,7 @@ class IpeController extends Controller
     private function normalizeStatus($status): string
     {
         $s = strtolower(trim((string) $status));
-        
+
         return match ($s) {
             'successful', 'success', 'resolved', 'in_progress', 'approved', 'completed' => 'successful',
             'processing', 'pending', 'submitted', 'new' => 'processing',
@@ -415,17 +372,19 @@ class IpeController extends Controller
     private function processRefund(AgentService $agentService)
     {
         // Refund logic for IPE
-        if (strtoupper($agentService->service_type) !== 'IPE') return 'not_eligible';
+        if (strtoupper($agentService->service_type) !== 'IPE')
+            return 'not_eligible';
 
         // Only refund if status is 'failed' (which includes 'cancelled' via mapping)
-        if ($agentService->status !== 'failed') return 'not_failed';
-        
+        if ($agentService->status !== 'failed')
+            return 'not_failed';
+
         $status = 'error';
         DB::beginTransaction();
         try {
             // Lock the service record to prevent concurrent refund attempts
             $lockedService = AgentService::where('id', $agentService->id)->lockForUpdate()->first();
-            
+
             if (!$lockedService || $lockedService->status !== 'failed') {
                 DB::rollBack();
                 return 'not_failed';
@@ -442,7 +401,7 @@ class IpeController extends Controller
             $refundExists = Transaction::where('type', 'refund')
                 ->where(function ($q) use ($lockedService) {
                     $q->where('description', 'LIKE', "%Request ID #{$lockedService->id}%")
-                      ->orWhere('metadata->original_request_id', $lockedService->id);
+                        ->orWhere('metadata->original_request_id', $lockedService->id);
                 })->exists();
 
             if ($refundExists) {
@@ -464,7 +423,7 @@ class IpeController extends Controller
                 Transaction::create([
                     'transaction_ref' => strtoupper(Str::random(12)),
                     'user_id' => $user->id,
-                    'performed_by' => 'System (Auto)', 
+                    'performed_by' => 'System (Auto)',
                     'amount' => $lockedService->amount,
                     'type' => 'refund',
                     'status' => 'completed',

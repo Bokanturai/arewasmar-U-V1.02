@@ -174,4 +174,18 @@ class SupportController extends Controller
             'is_typing' => $isTyping,
         ]);
     }
+
+    public function close($reference)
+    {
+        $ticket = SupportTicket::where('ticket_reference', $reference)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $ticket->update(['status' => 'closed']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ticket closed successfully.'
+        ]);
+    }
 }

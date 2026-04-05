@@ -61,18 +61,7 @@ class NinModificationController extends Controller
         );
 
         // CRM submission history with custom ordering
-        $crmSubmissions = $query->orderByRaw("
-                CASE status 
-                    WHEN 'pending' THEN 1 
-                    WHEN 'query' THEN 2 
-                    WHEN 'processing' THEN 3 
-                    WHEN 'successful' THEN 4 
-                    WHEN 'resolved' THEN 5 
-                    WHEN 'rejected' THEN 6 
-                    ELSE 7 
-                END
-            ")
-            ->orderByDesc('submission_date')
+        $crmSubmissions = $query->orderByDesc('submission_date')
             ->paginate(10)
             ->withQueryString();
 
@@ -91,13 +80,13 @@ class NinModificationController extends Controller
     {
         $user = Auth::user();
         if (($user->status ?? 'inactive') !== 'active') {
-             return redirect()->back()->with('error', "Your account is currently " . ($user->status ?? 'inactive') . ". Access denied.");
+            return redirect()->back()->with('error', "Your account is currently " . ($user->status ?? 'inactive') . ". Access denied.");
         }
 
         // Validation
         $rules = [
             'service_field_id' => 'required|exists:service_fields,id',
-            'nin'             => 'required|string|regex:/^[0-9]{11}$/',
+            'nin' => 'required|string|regex:/^[0-9]{11}$/',
         ];
 
         if ($request->has('modification_data')) {
@@ -165,18 +154,18 @@ class NinModificationController extends Controller
             // Create Transaction
             $transaction = Transaction::create([
                 'transaction_ref' => $transactionRef,
-                'user_id'        => $user->id,
-                'amount'         => $servicePrice,
-                'description'    => "NIN modification for {$serviceField->field_name}",
-                'type'           => 'debit',
-                'status'         => 'completed',
-                'performed_by'   => $performedBy,
-                'metadata'       => [
-                    'service'          => $service->name,
-                    'service_field'    => $serviceField->field_name,
-                    'field_code'       => $serviceField->field_code,
-                    'nin'              => $validated['nin'],
-                    'price_details'    => [
+                'user_id' => $user->id,
+                'amount' => $servicePrice,
+                'description' => "NIN modification for {$serviceField->field_name}",
+                'type' => 'debit',
+                'status' => 'completed',
+                'performed_by' => $performedBy,
+                'metadata' => [
+                    'service' => $service->name,
+                    'service_field' => $serviceField->field_name,
+                    'field_code' => $serviceField->field_code,
+                    'nin' => $validated['nin'],
+                    'price_details' => [
                         'base_price' => $serviceField->base_price,
                         'user_price' => $servicePrice
                     ],
@@ -188,22 +177,23 @@ class NinModificationController extends Controller
 
             // Create NIN Modification record
             AgentService::create([
-                'reference'          => $transactionRef,
-                'user_id'            => $user->id,
-                'service_field_id'   => $serviceField->id,
-                'service_id'         => $service->id,
-                'field_code'         => $serviceField->field_code,
-                'amount'             => $servicePrice,
-                'service_name'       => $service->name,
+                'reference' => $transactionRef,
+                'user_id' => $user->id,
+                'service_field_id' => $serviceField->id,
+                'service_id' => $service->id,
+                'field_code' => $serviceField->field_code,
+                'amount' => $servicePrice,
+                'service_name' => $service->name,
                 'service_field_name' => $serviceField->field_name,
-                'nin'                => $validated['nin'],
-                'description'        => $description,
-                'modification_data'  => $request->input('modification_data'),
-                'performed_by'       => $performedBy,
-                'transaction_id'     => $transaction->id,
-                'submission_date'    => now(),
-                'status'             => 'pending',
-                'service_type'       => 'NIN MODIFICATION',
+                'nin' => $validated['nin'],
+                'description' => $description,
+                'modification_data' => $request->input('modification_data'),
+                'performed_by' => $performedBy,
+                'comment' => 'your request is being processing we will update you one the request is treated',
+                'transaction_id' => $transaction->id,
+                'submission_date' => now(),
+                'status' => 'pending',
+                'service_type' => 'NIN MODIFICATION',
             ]);
 
             DB::commit();
@@ -216,8 +206,8 @@ class NinModificationController extends Controller
             return redirect()->route('nin-modification')->with([
                 'status' => 'success',
                 'message' => 'NIN Modification Submitted Successfully. Reference: ' .
-                             $transactionRef . '. Charged: NGN ' .
-                             number_format($servicePrice, 2),
+                    $transactionRef . '. Charged: NGN ' .
+                    number_format($servicePrice, 2),
             ]);
 
         } catch (\Exception $e) {
@@ -225,7 +215,7 @@ class NinModificationController extends Controller
 
             Log::error('NIN Modification submission failed', [
                 'user_id' => $user->id,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return back()->with([

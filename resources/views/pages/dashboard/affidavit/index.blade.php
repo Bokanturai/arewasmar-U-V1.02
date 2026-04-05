@@ -233,6 +233,7 @@
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#commentModal"
                                                     data-comment="{{ $submission->comment ?? 'No comment yet.' }}"
+                                                    data-reference="{{ $submission->reference }}"
                                                     data-file-url="{{ $fileUrl }}"
                                                     data-approved-by="{{ $submission->approved_by }}">
                                                 <i class="bi bi-chat-left-text"></i> View

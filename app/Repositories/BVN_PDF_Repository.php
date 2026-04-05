@@ -24,15 +24,15 @@ class BVN_PDF_Repository
                 "sName" => $verifiedRecord->surname,
                 "mName" => $verifiedRecord->middlename,
                 "tId" => $verifiedRecord->trackingId,
-                "address" => $verifiedRecord->residence_address,
-                "lga" => $verifiedRecord->residence_lga,
-                "state" => $verifiedRecord-> residence_state ,
-                "gender" => ($verifiedRecord->gender === 'Male') ? "M" : "F",
+                "address" => $verifiedRecord->residentialAddress ?? $verifiedRecord->residence_address,
+                "lga" => $verifiedRecord->lgaOfResidence ?? $verifiedRecord->residence_lga,
+                "state" => $verifiedRecord->stateOfResidence ?? $verifiedRecord->residence_state,
+                "gender" => ($verifiedRecord->gender === 'Male' || $verifiedRecord->gender === 'M') ? "M" : "F",
                 "dob" => $verifiedRecord->birthdate,
                 "photo" => str_replace('data:image/jpg;base64,', '', $verifiedRecord->photo_path)
             ];
 
-            $names = html_entity_decode($verifiedRecord->first_name) . ' ' . html_entity_decode($verifiedRecord->last_name);
+            $names = html_entity_decode($verifiedRecord->firstname) . ' ' . html_entity_decode($verifiedRecord->surname);
 
             // Initialize TCPDF
             $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8');

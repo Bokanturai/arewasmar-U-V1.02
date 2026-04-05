@@ -105,8 +105,16 @@
                   <td>{{$veridiedRecord->middlename}}</td>
                 </tr>
                 <tr>
+                  <td width="35%">Name on Card</td>
+                  <td>{{$veridiedRecord->nameOnCard}}</td>
+                </tr>
+                <tr>
                   <td width="35%">Phone</td>
                   <td>{{$veridiedRecord->telephoneno}}</td>
+                </tr>
+                <tr>
+                  <td width="35%">Phone 2</td>
+                  <td>{{$veridiedRecord->phoneNumber2}}</td>
                 </tr>
                 <tr>
                   <td width="35%">Email</td>
@@ -114,28 +122,56 @@
                 </tr>
                 <tr>
                   <td width="35%">Date of Birth</td>
-                  <td>{{date("d-M-Y", strtotime($veridiedRecord->birthdate))}}</td>
+                  <td>{{ $veridiedRecord->birthdate ? date("d-M-Y", strtotime($veridiedRecord->birthdate)) : 'N/A' }}</td>
                 </tr>
                 <tr>
                   <td width="35%">Gender</td>
                   <td>{{$veridiedRecord->gender}}</td>
                 </tr>
                 <tr>
+                   <td width="35%">Marital Status</td>
+                   <td>{{$veridiedRecord->maritalStatus}}</td>
+                </tr>
+                <tr>
+                  <td width="35%">Nationality</td>
+                  <td>{{$veridiedRecord->nationality}}</td>
+                </tr>
+                <tr>
+                  <td width="35%">State of Origin</td>
+                  <td>{{$veridiedRecord->stateOfOrigin}}</td>
+                </tr>
+                <tr>
+                  <td width="35%">LGA of Origin</td>
+                  <td>{{$veridiedRecord->lgaOfOrigin}}</td>
+                </tr>
+                <tr>
                   <td width="35%">Enrollment Bank</td>
-                  <td>{{$veridiedRecord->enrollment_bank}}</td>
+                  <td>{{$veridiedRecord->enrollmentBank}}</td>
                 </tr>
                 <tr>
                   <td width="35%">Enrollment Branch</td>
-                  <td>{{$veridiedRecord->enrollment_branch}}</td>
+                  <td>{{$veridiedRecord->enrollmentBranch}}</td>
                 </tr>
                 <tr>
                   <td width="35%">Registration Date</td>
-                  <td></td>
+                  <td>{{ $veridiedRecord->registrationDate ? date("d-M-Y", strtotime($veridiedRecord->registrationDate)) : '' }}</td>
+                </tr>
+                <tr>
+                  <td width="35%">Account Level</td>
+                  <td>{{$veridiedRecord->levelOfAccount}}</td>
+                </tr>
+                <tr>
+                  <td width="35%">Watchlisted</td>
+                  <td>{{$veridiedRecord->watchListed}}</td>
                 </tr>
                 <tr>
                   <td>Address</td>
-                  <td></td>
-
+                  <td>
+                    {{$veridiedRecord->residentialAddress}}
+                    @if($veridiedRecord->lgaOfResidence || $veridiedRecord->stateOfResidence)
+                        <br><small>{{$veridiedRecord->lgaOfResidence}}, {{$veridiedRecord->stateOfResidence}}</small>
+                    @endif
+                  </td>
                 </tr>
               </tbody>
             </table>

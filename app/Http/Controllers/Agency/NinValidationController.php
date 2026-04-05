@@ -27,7 +27,7 @@ class NinValidationController extends Controller
         $services = collect();
         $user = Auth::user();
         $role = $user->role ?? 'user';
-        
+
         foreach ($validationFields as $field) {
             $price = $field->prices()->where('user_type', $role)->value('price') ?? $field->base_price;
             $services->push([
@@ -38,9 +38,9 @@ class NinValidationController extends Controller
                 'service_id' => $field->service_id
             ]);
         }
-        
+
         $wallet = Wallet::where('user_id', Auth::id())->first();
-        
+
         $query = AgentService::where('user_id', Auth::id())
             ->where('service_type', 'NIN_VALIDATION');
 
@@ -53,17 +53,7 @@ class NinValidationController extends Controller
             $query->where('status', $request->status);
         }
 
-        $submissions = $query->orderByRaw("
-          CASE status 
-        WHEN 'pending' THEN 1 
-        WHEN 'processing' THEN 2 
-        WHEN 'successful' THEN 3 
-        WHEN 'failed' THEN 4 
-        WHEN 'resolved' THEN 5 
-        WHEN 'rejected' THEN 6 
-        ELSE 7 
-            END
-        ")->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
+        $submissions = $query->orderBy('created_at', 'desc')->paginate(5)->withQueryString();
 
         return view('nin.validation', compact('services', 'wallet', 'submissions'));
     }
@@ -72,7 +62,7 @@ class NinValidationController extends Controller
     {
         // 1. Authenticate user
         $user = Auth::user();
-        
+
         // 2. Validate request
         $validated = $request->validate([
             'service_field' => 'required',
@@ -82,7 +72,7 @@ class NinValidationController extends Controller
         // 3. Check service active
         $fieldId = $request->service_field;
         $serviceField = ServiceField::with('service')->findOrFail($fieldId);
-        
+
         if (!$serviceField->service || !$serviceField->service->is_active) {
             return back()->with('error', 'This service is currently inactive.');
         }
@@ -109,7 +99,7 @@ class NinValidationController extends Controller
                 return back()->with('error', 'Insufficient wallet balance.');
             }
 
-            // 8. Create transaction (pending)
+            // 8. Create transaction (completed - non-refundable)
             $transactionRef = 'bokap' . strtoupper(Str::random(10));
             $performedBy = $user->first_name . ' ' . $user->last_name;
 
@@ -119,7 +109,7 @@ class NinValidationController extends Controller
                 'amount' => $servicePrice,
                 'description' => "NIN Validation for {$serviceField->field_name}",
                 'type' => 'debit',
-                'status' => 'pending',
+                'status' => 'completed',
                 'performed_by' => $performedBy,
                 'metadata' => [
                     'service' => 'Validation',
@@ -143,6 +133,7 @@ class NinValidationController extends Controller
                 'nin' => $request->nin,
                 'amount' => $servicePrice,
                 'status' => 'processing',
+                'comment' => 'your request is being processing we will update you one the request is treated',
                 'submission_date' => now(),
                 'service_field_name' => $serviceField->field_name,
                 'description' => $request->description ?? $serviceField->field_name,
@@ -152,7 +143,7 @@ class NinValidationController extends Controller
             // 11. Commit
             DB::commit();
 
-            // Check if we already have this nin in the database
+            // Check if we already have this nin in the database (LOCAL CHECK)
             $existingService = AgentService::where('nin', $request->nin)
                 ->where('service_type', 'nin_validation')
                 ->where('id', '!=', $agentService->id)
@@ -164,37 +155,44 @@ class NinValidationController extends Controller
                 $status = $existingService->status;
                 $cleanResponse = $existingService->comment;
 
-                if (in_array($status, ['failed', 'rejected', 'error'])) {
-                    // Refund logic
-                    DB::beginTransaction();
-                    $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
-                    $wallet->increment('balance', $servicePrice);
-                    
-                    $transaction->update(['status' => 'failed']);
-                    $agentService->update([
-                        'status' => 'failed',
-                        'comment' => $cleanResponse
-                    ]);
-                    DB::commit();
-
-                    return back()->with('error', 'API Submission Failed: ' . $cleanResponse . '. Your wallet has been refunded.');
-                }
-
-                // Success/Processing logic
-                $transaction->update(['status' => 'completed']);
                 $agentService->update([
                     'status' => $status,
                     'comment' => $cleanResponse,
                 ]);
 
-                return back()->with('success', 'Request submitted successfully. Status: ' . $status);
+                return back()->with('success', 'NIN Information retrieved successfully from records. Status: ' . $status);
             }
 
-            // 12. API Call to Idenfy
+            // 12. External API Check (PROVIDER STATUS CHECK)
             $apiKey = env('IDENFY_API_KEY');
             $apiBaseUrl = env('IDENFY_API_BASE');
-            $apiUrl = $apiBaseUrl . '/api/nin-validation';
 
+            // --- UPGRADE: Check Provider Status API before submitting new record ---
+            $statusUrl = $apiBaseUrl . '/api/nin-validation-status';
+            $statusResponse = Http::withToken($apiKey)->post($statusUrl, [
+                'nin' => $request->nin,
+            ]);
+
+            if ($statusResponse->successful()) {
+                $statusData = $statusResponse->json();
+                $apiStatusText = $statusData['code'] ?? $statusData['status'] ?? $statusData['response'] ?? null;
+
+                // If the provider has a record, use it
+                if ($apiStatusText && !Str::contains(strtolower($apiStatusText), ['no record', 'not found', 'error'])) {
+                    $cleanResponse = $this->cleanApiResponse($statusData);
+                    $normStatus = $this->normalizeStatus($apiStatusText);
+
+                    $agentService->update([
+                        'status' => $normStatus,
+                        'comment' => $cleanResponse,
+                    ]);
+
+                    return back()->with('success', 'NIN Information retrieved successfully from provider. Status: ' . $normStatus);
+                }
+            }
+
+            // 13. API Call to Idenfy (NEW SUBMISSION)
+            $apiUrl = $apiBaseUrl . '/api/nin-validation';
             $payload = [
                 'nin' => $request->nin,
                 'message' => $serviceField->field_name,
@@ -203,34 +201,25 @@ class NinValidationController extends Controller
             $response = Http::withToken($apiKey)->post($apiUrl, $payload);
             $data = $response->json();
 
-            // if the request submitted to api and return with the status true means successful sent
             if ($response->successful() && ($data['status'] ?? false) === true) {
                 $status = $this->normalizeStatus($data['code'] ?? 'processing');
-                
-                $transaction->update(['status' => 'completed']);
+
                 $agentService->update([
                     'status' => $status,
                     'comment' => $this->cleanApiResponse($data),
                 ]);
 
                 return back()->with('success', 'Request submitted successfully. Status: ' . $status);
-            } 
-            
-            // if its return with the status failed means its not send
-            // Refund logic
-            DB::beginTransaction();
-            $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
-            $wallet->increment('balance', $servicePrice);
-            
+            }
+
+            // Non-Refundable: Even if submission fails at this stage, we keep the charge
             $errorMessage = $data['message'] ?? 'API Submission Failed';
-            $transaction->update(['status' => 'failed']);
             $agentService->update([
                 'status' => 'failed',
                 'comment' => $errorMessage
             ]);
-            DB::commit();
 
-            return back()->with('error', 'API Submission Failed: ' . $errorMessage . '. Your wallet has been refunded.');
+            return back()->with('error', 'API Submission Failed: ' . $errorMessage . '. (Service is non-refundable)');
 
         } catch (\Exception $e) {
             if (DB::transactionLevel() > 0) {
@@ -273,7 +262,7 @@ class NinValidationController extends Controller
             $apiResponse = $response->json();
 
             $apiStatus = $apiResponse['code'] ?? $apiResponse['status'] ?? $apiResponse['response'] ?? null;
-            
+
             $updateData = [
                 'comment' => $this->cleanApiResponse($apiResponse),
             ];
@@ -283,16 +272,6 @@ class NinValidationController extends Controller
             }
 
             $agentService->update($updateData);
-
-            if ($request->wantsJson() || $request->is('api/*')) {
-                return response()->json([
-                    'success' => true,
-                    'nin' => $agentService->nin,
-                    'status' => $agentService->status,
-                    'response' => $apiResponse,
-                    'clean_comment' => $cleanResponse
-                ]);
-            }
 
             return back()->with('success', 'Status checked successfully. Current status: ' . $agentService->status);
 
@@ -310,59 +289,20 @@ class NinValidationController extends Controller
         }
     }
 
-    public function webhook(Request $request)
-    {
-        $data = $request->all();
 
-        Log::info('NIN Validation Webhook Received', $data);
-
-        $identifier = $data['nin'] ?? null;
-
-        if ($identifier) {
-            $submission = AgentService::where('nin', $identifier)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            if ($submission) {
-                $cleanResponse = $this->cleanApiResponse($data);
-                
-                $updateData = [
-                    'comment' => $cleanResponse,
-                ];
-
-                $apiStatus = $data['code'] ?? $data['status'] ?? null;
-                if ($apiStatus !== null) {
-                    $updateData['status'] = $this->normalizeStatus($apiStatus);
-                }
-
-                $submission->update($updateData);
-
-                Log::info('NIN Validation Updated via Webhook', [
-                    'submission_id' => $submission->id,
-                    'identifier' => $identifier,
-                    'new_status' => $updateData['status'] ?? 'unknown'
-                ]);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Webhook received successfully'
-        ]);
-    }
 
     private function cleanApiResponse($response): string
     {
         if (is_array($response)) {
             $message = $response['message'] ?? '';
             $reply = $response['data']['reply'] ?? $response['reply'] ?? '';
-            
+
             $combined = trim($message . ($message && $reply ? ': ' : '') . $reply);
-            
+
             if ($combined) {
                 return strip_tags($combined);
             }
-            
+
             $jsonString = json_encode($response, JSON_PRETTY_PRINT);
         } else {
             $jsonString = (string) $response;
@@ -378,7 +318,7 @@ class NinValidationController extends Controller
     private function normalizeStatus($status): string
     {
         $s = strtolower(trim((string) $status));
-        
+
         return match ($s) {
             'successful', 'success', 'resolved', 'in_progress', 'approved', 'completed' => 'successful',
             'processing', 'pending', 'submitted', 'request_submitted', 'new' => 'processing',

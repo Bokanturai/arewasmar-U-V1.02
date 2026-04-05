@@ -116,16 +116,16 @@
                                                 <td class="fw-bold text-primary">{{ session('verification')['data']['bvn'] }}</td>
                                             </tr>
                                             <tr>
-                                                <th class="bg-light">First Name</th>
-                                                <td>{{ session('verification')['data']['firstName'] }}</td>
+                                                <th class="bg-light">Full Name</th>
+                                                <td>
+                                                    {{ session('verification')['data']['firstName'] }} 
+                                                    {{ session('verification')['data']['middleName'] ?? '' }} 
+                                                    {{ session('verification')['data']['lastName'] }}
+                                                </td>
                                             </tr>
                                             <tr>
-                                                <th class="bg-light">Last Name</th>
-                                                <td>{{ session('verification')['data']['lastName'] }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th class="bg-light">Middle Name</th>
-                                                <td>{{ session('verification')['data']['middleName'] ?? 'N/A' }}</td>
+                                                <th class="bg-light">Name on Card</th>
+                                                <td>{{ session('verification')['data']['nameOnCard'] ?? 'N/A' }}</td>
                                             </tr>
                                             <tr>
                                                 <th class="bg-light">Date of Birth</th>
@@ -140,8 +140,79 @@
                                                 <td>{{ ucfirst(session('verification')['data']['gender'] ?? 'N/A') }}</td>
                                             </tr>
                                             <tr>
-                                                <th class="bg-light">Phone</th>
-                                                <td>{{ session('verification')['data']['phoneNumber'] ?? 'N/A' }}</td>
+                                                <th class="bg-light">Marital Status</th>
+                                                <td>{{ session('verification')['data']['maritalStatus'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Nationality</th>
+                                                <td>{{ session('verification')['data']['nationality'] ?? 'Nigeria' }}</td>
+                                            </tr>
+
+                                            <tr class="table-secondary"><th colspan="2" class="text-center small fw-bold">CONTACT INFORMATION</th></tr>
+                                            <tr>
+                                                <th class="bg-light">Phone Numbers</th>
+                                                <td>
+                                                    {{ session('verification')['data']['phoneNumber'] ?? 'N/A' }}
+                                                    @if(!empty(session('verification')['data']['phoneNumber2']))
+                                                        / {{ session('verification')['data']['phoneNumber2'] }}
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Email Address</th>
+                                                <td>{{ session('verification')['data']['email'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Residential Address</th>
+                                                <td>
+                                                    {{ session('verification')['data']['residentialAddress'] ?? 'N/A' }}<br>
+                                                    <small class="text-muted">
+                                                        {{ session('verification')['data']['lgaOfResidence'] ?? '' }}, 
+                                                        {{ session('verification')['data']['stateOfResidence'] ?? '' }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+
+                                            <tr class="table-secondary"><th colspan="2" class="text-center small fw-bold">ORIGIN INFORMATION</th></tr>
+                                            <tr>
+                                                <th class="bg-light">State of Origin</th>
+                                                <td>{{ session('verification')['data']['stateOfOrigin'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">LGA of Origin</th>
+                                                <td>{{ session('verification')['data']['lgaOfOrigin'] ?? 'N/A' }}</td>
+                                            </tr>
+
+                                            <tr class="table-secondary"><th colspan="2" class="text-center small fw-bold">ENROLLMENT & STATUS</th></tr>
+                                            <tr>
+                                                <th class="bg-light">Enrollment Bank</th>
+                                                <td>{{ session('verification')['data']['enrollmentBank'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Enrollment Branch</th>
+                                                <td>{{ session('verification')['data']['enrollmentBranch'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Registration Date</th>
+                                                <td>
+                                                    {{ !empty(session('verification')['data']['registrationDate'])
+                                                        ? \Carbon\Carbon::parse(session('verification')['data']['registrationDate'])->format('d M, Y')
+                                                        : 'N/A' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Account Level</th>
+                                                <td>{{ session('verification')['data']['levelOfAccount'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">Watchlisted</th>
+                                                <td>
+                                                    @if((session('verification')['data']['watchListed'] ?? '') == 'true' || (session('verification')['data']['watchListed'] ?? '') === true)
+                                                        <span class="badge bg-danger">YES</span>
+                                                    @else
+                                                        <span class="badge bg-success">NO</span>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>

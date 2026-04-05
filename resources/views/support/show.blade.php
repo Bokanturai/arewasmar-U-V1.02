@@ -147,10 +147,22 @@
 } }} px-3 py-2">
                             {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
                         </span>
-                        <a href="{{ route('support.index') }}"
-                            class="btn btn-outline-secondary btn-sm rounded-pill d-none d-md-inline-flex">
-                            <i class="ti ti-arrow-left me-1"></i> Back to Dashboard
-                        </a>
+
+                        <div class="d-flex gap-2">
+                            @if($ticket->status !== 'closed')
+                                <button onclick="closeTicket('{{ $ticket->ticket_reference }}')"
+                                    class="btn btn-outline-danger btn-sm rounded-pill d-inline-flex align-items-center">
+                                    <i class="ti ti-circle-x me-1"></i>
+                                    <span class="d-none d-sm-inline">Close Ticket</span>
+                                    <span class="d-sm-none">Close</span>
+                                </button>
+                            @endif
+
+                            <a href="{{ route('support.index') }}"
+                                class="btn btn-outline-secondary btn-sm rounded-pill d-none d-md-inline-flex align-items-center">
+                                <i class="ti ti-arrow-left me-1"></i> Back
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,8 +194,12 @@
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                                         <li><a class="dropdown-item" href="#"><i
                                                     class="ti ti-info-circle me-2"></i>Ticket Details</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#"><i
-                                                    class="ti ti-circle-x me-2"></i>Close Ticket</a></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="javascript:void(0)"
+                                                onclick="closeTicket('{{ $ticket->ticket_reference }}')">
+                                                <i class="ti ti-circle-x me-2"></i>Close Ticket
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -528,6 +544,51 @@
                 fileInput.addEventListener('change', function (e) {
                     const fileName = e.target.files[0]?.name;
                     document.getElementById('fileNameDisplay').textContent = fileName ? '📎 ' + fileName : '';
+                });
+            }
+
+            // Close Ticket functionality
+            function closeTicket(reference) {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You want to close this support ticket? You won't be able to reply anymore.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, close it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/support/${reference}/close`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire({
+                                        title: 'Closed!',
+                                        text: 'Your ticket has been closed.',
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({ icon: 'error', title: 'Oops...', text: 'Failed to close the ticket.' });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire({ icon: 'error', title: 'Error', text: 'An unexpected error occurred.' });
+                            });
+                    }
                 });
             }
 

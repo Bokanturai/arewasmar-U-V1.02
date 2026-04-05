@@ -73,9 +73,10 @@
             <td id="name1">{{$veridiedRecord->firstname}}</td>
         </tr>
 
-        <tr>
+         <tr>
             <td>Middle Name</td>
-            <td>
+            <td>{{$veridiedRecord->middlename ?? 'N/A' }}</td>
+        </tr>
 
                 @if(!empty($veridiedRecord->middlename))
                     {{$veridiedRecord->middle_name;}}

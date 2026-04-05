@@ -16,7 +16,7 @@
 
         <div class="container-fluid">
             <div class="row">
-                <!-- Form Section -->
+                {{-- Form Section --}}
                 <div class="col-xl-5 mb-4">
                     <div class="card shadow-lg border-0 rounded-4">
                         <div class="card-header bg-primary text-white p-3 p-md-4 border-0 rounded-top-4 text-center text-sm-start">
@@ -40,7 +40,7 @@
                             <form method="POST" action="{{ route('ipe-validation.store') }}" class="row g-4">
                                 @csrf
 
-                                <!-- Service Field Selection -->
+                                {{-- Service Field Selection --}}
                                 <div class="col-12">
                                     <label for="service_field" class="form-label fw-semibold text-dark">Select Service Field <span class="text-danger">*</span></label>
                                     <select name="service_field" id="service_field" class="form-select form-select-lg bg-light border-0 shadow-sm" required>
@@ -56,7 +56,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Tracking ID Input -->
+                                {{-- Tracking ID Input --}}
                                 <div class="col-12" id="tracking_wrapper">
                                     <label class="form-label fw-semibold text-dark">Tracking ID <span class="text-danger">*</span></label>
                                     <div class="input-group input-group-lg shadow-sm">
@@ -65,7 +65,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Price Display -->
+                                {{-- Price Display --}}
                                 <div class="col-12">
                                     <div class="alert alert-info d-flex justify-content-between align-items-center mb-0 rounded-3 shadow-sm border-0">
                                         <div class="d-flex align-items-center">
@@ -81,12 +81,12 @@
                                     </div>
                                 </div>
 
-                                <!-- Warning -->
+                                {{-- Warning --}}
                                 <div class="col-12">
-                                    <div class="alert alert-warning py-3 rounded-3 shadow-sm border-0 d-flex align-items-center">
+                                    <div class="alert alert-success py-3 rounded-3 shadow-sm border-0 d-flex align-items-center">
                                         <i class="bi bi-exclamation-circle text-warning fs-15 me-3"></i>
                                         <div class="small">
-                                            <strong>Non-refundable Service</strong><br>
+                                            <strong>Is- refundable Service</strong><br>
                                             Please verify all details carefully before submission.
                                         </div>
                                     </div>
@@ -102,16 +102,16 @@
                     </div>
                 </div>
 
-                <!-- History Section -->
+                {{-- History Section --}}
                 <div class="col-xl-7">
                     <div class="card shadow-lg border-0 rounded-4">
-                        <!-- Header -->
+                        {{-- Header --}}
                         <div class="card-header bg-white p-3 p-md-4 border-bottom d-flex justify-content-center justify-content-sm-between align-items-center rounded-top-4">
                             <h5 class="mb-0 fw-bold text-dark fs-15"><i class="bi bi-clock-history text-primary me-2"></i>Request History</h5>
                         </div>
 
                         <div class="card-body p-3 p-md-4">
-                            <!-- Filters -->
+                            {{-- Filters --}}
                             <form class="row g-3 mb-4" method="GET">
                                 <div class="col-12 col-md-5">
                                     <div class="input-group shadow-sm">
@@ -136,7 +136,7 @@
                                 </div>
                             </form>
 
-                            <!-- Table -->
+                            {{-- Table --}}
                             <div class="table-responsive rounded-3 border">
                                 <table class="table table-hover table-borderless align-middle mb-0 text-nowrap">
                                     <thead class="table-light border-bottom">
@@ -160,8 +160,7 @@
 
                                                 <!-- Tracking ID -->
                                                 <td>
-                                                    <span class="fw-bold">{{ $submission->tracking_id }}</span>
-                                                    <br>
+                                                    <span class="fw-bold d-block">{{ $submission->tracking_id }}</span>
                                                     <small class="text-primary fw-medium">
                                                         {{ $submission->service_field_name }}
                                                     </small>
@@ -194,7 +193,16 @@
                                                         @endif
 
                                                         <!-- View Comment -->
-                                                        <button type="button" class="btn btn-sm btn-light text-secondary shadow-sm rounded-circle d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#responseModal" data-response="{{ $submission->comment ?? 'No comment yet.' }}" data-bs-toggle="tooltip" title="View Response" style="width: 35px; height: 35px;">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-light text-secondary shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#commentModal"
+                                                                data-comment="{{ $submission->comment ?? 'No comment yet.' }}"
+                                                                data-reference="{{ $submission->reference }}"
+                                                                data-file-url="{{ $submission->file_url ?? '' }}"
+                                                                data-approved-by="{{ $submission->approved_by ?? '' }}"
+                                                                title="View Response"
+                                                                style="width: 35px; height: 35px;">
                                                             <i class="bi bi-chat-left-text fs-15"></i>
                                                         </button>
                                                     </div>
@@ -217,7 +225,7 @@
                                 </table>
                             </div>
 
-                            <!-- Pagination -->
+                            {{-- Pagination --}}
                             <div class="mt-4 d-flex justify-content-end">
                                 {{ $submissions->withQueryString()->links('vendor.pagination.custom') }}
                             </div>
@@ -226,64 +234,8 @@
                 </div>
             </div> <!-- End Row -->
 
-            <!-- Response Modal -->
-            <div class="modal fade" id="responseModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-
-                        <!-- Header -->
-                        <div class="modal-header bg-gradient-primary text-white py-3 px-3 py-md-4 px-md-4 border-bottom-0" style="background: linear-gradient(135deg, var(--bs-primary) 0%, #2a52be 100%);">
-                            <div class="d-flex align-items-center gap-2 gap-sm-3">
-                                <div class="bg-white bg-opacity-25 p-2 rounded-circle d-none d-sm-block">
-                                    <i class="bi bi-chat-left-text fs-15 text-white"></i>
-                                </div>
-                                <div>
-                                    <h5 class="modal-title text-white mb-0 fw-bold fs-15">IPE Clearance Response</h5>
-                                    <p class="small text-white-50 mb-0">Details of your submission</p>
-                                </div>
-                            </div>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-
-                        <!-- Body -->
-                        <div class="modal-body p-3 p-md-4 bg-light" style="font-size: 1rem; min-height: 200px;">
-                            <!-- Loading State -->
-                            <div id="responseLoading" class="text-center text-secondary py-4">
-                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                                <h6 class="mb-0 fw-medium">Processing request...</h6>
-                            </div>
-
-                            <!-- Response Content -->
-                            <div id="responseContentWrapper" class="d-none">
-                                <div class="bg-white p-3 p-md-4 rounded-4 shadow-sm border mb-0">
-                                    <pre id="responseContent" class="mb-0 text-dark" style="white-space: pre-wrap; font-size: 0.9rem; font-family: inherit;"></pre>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="modal-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center py-3 px-3 px-md-4 gap-3">
-                            <!-- Quick Access Buttons -->
-                            <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 w-100 w-sm-auto">
-                                <a href="#" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm transition-all hover-lift w-100 w-sm-auto mb-1 mb-sm-0">
-                                    <i class="bi bi-file-earmark-text me-2"></i> BVN Report
-                                </a>
-                                <a href="#" class="btn btn-outline-warning rounded-pill px-4 fw-medium shadow-sm transition-all hover-lift w-100 w-sm-auto mb-1 mb-sm-0">
-                                    <i class="bi bi-award me-2"></i> VIP Access
-                                </a>
-                                <a href="#" class="btn btn-outline-info rounded-pill px-4 fw-medium shadow-sm transition-all hover-lift w-100 w-sm-auto mb-1 mb-sm-0">
-                                    <i class="bi bi-question-circle me-2"></i> Complain
-                                </a>
-                            </div>
-                            <!-- Encouragement Text -->
-                            <div id="encouragement" class="text-success fw-medium small d-flex align-items-center gap-1 w-100 w-sm-auto justify-content-center">
-                                <i class="bi bi-check-circle-fill"></i> Reviewed successfully
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+            {{-- Response Modal --}}
+            @include('pages.comment')
 
             <style>
                 .hover-lift:hover {
@@ -323,36 +275,6 @@
                         });
                     }
 
-                    /* ---------------------------------------------------
-                       MODERN RESPONSE MODAL HANDLING
-                    ----------------------------------------------------*/
-                    const responseModal = document.getElementById('responseModal');
-                    if (responseModal) {
-                        responseModal.addEventListener('show.bs.modal', function(event) {
-                            // Button that triggered the modal
-                            const button = event.relatedTarget;
-                            // Extract info from data-bs-* attributes
-                            const responseText = button.getAttribute('data-response');
-
-                            // Update the modal's content.
-                            const modalBodyContentWrapper = responseModal.querySelector('#responseContentWrapper');
-                            const modalBodyContent = responseModal.querySelector('#responseContent');
-                            const modalLoading = responseModal.querySelector('#responseLoading');
-
-                            if (modalLoading) modalLoading.classList.add('d-none');
-                            if (modalBodyContentWrapper && modalBodyContent) {
-                                modalBodyContentWrapper.classList.remove('d-none');
-                                modalBodyContent.textContent = responseText;
-                            }
-                        });
-                        
-                        responseModal.addEventListener('hidden.bs.modal', function(event) {
-                            const modalBodyContentWrapper = responseModal.querySelector('#responseContentWrapper');
-                            const modalLoading = responseModal.querySelector('#responseLoading');
-                            if (modalLoading) modalLoading.classList.remove('d-none');
-                            if (modalBodyContentWrapper) modalBodyContentWrapper.classList.add('d-none');
-                        });
-                    }
 
                 }); // DOM Loaded END
             </script>

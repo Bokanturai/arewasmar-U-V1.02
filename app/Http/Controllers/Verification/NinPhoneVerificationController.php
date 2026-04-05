@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Verification;
 
+use App\Http\Controllers\Controller;
 use App\Helpers\ServiceManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ use App\Repositories\NIN_PDF_Repository;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
-class NINPhoneVerificationController extends Controller
+class NinPhoneVerificationController extends Controller
 {
     /**
      * Show Phone verification page

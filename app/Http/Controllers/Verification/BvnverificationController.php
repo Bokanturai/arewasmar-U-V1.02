@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Verification;
 
+use App\Http\Controllers\Controller;
 use App\Helpers\noncestrHelper;
 use App\Helpers\signatureHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Verification;
 use App\Models\Transaction;
@@ -15,6 +15,7 @@ use App\Models\ServiceField;
 use App\Models\Wallet;
 use App\Repositories\BVN_PDF_Repository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class BvnverificationController extends Controller
 {
@@ -28,12 +29,12 @@ class BvnverificationController extends Controller
 
         // 0. Preliminary Status Checks
         if ($user->status !== 'active') {
-             return redirect()->back()->with('error', "Your account is currently {$user->status}. Access denied.");
+            return redirect()->back()->with('error', "Your account is currently {$user->status}. Access denied.");
         }
 
         // Get Verification Service
         $service = Service::where('name', 'Verification')->first();
-        
+
         // Get Prices
         $verificationPrice = 0;
         $standardSlipPrice = 0;
@@ -72,7 +73,7 @@ class BvnverificationController extends Controller
 
         // 0. Preliminary Status Checks
         if ($user->status !== 'active') {
-             return redirect()->back()->with('error', "Your account is currently {$user->status}. Access denied.");
+            return redirect()->back()->with('error', "Your account is currently {$user->status}. Access denied.");
         }
 
         $validated = $request->validate([
@@ -123,6 +124,8 @@ class BvnverificationController extends Controller
                 'message' => 'Insufficient wallet balance. You need NGN ' . number_format($servicePrice - $wallet->balance, 2)
             ]);
         }
+
+        // 5. Pre-check: Local Data Freshness (10-Day Rule)
 
         try {
 
@@ -195,8 +198,8 @@ class BvnverificationController extends Controller
             ];
 
             if ($respCode === '00000000') {
-                 // Successful -> Charge + Create Transaction + Create Verification
-                 return $this->processSuccessTransaction(
+                // Successful -> Charge + Create Transaction + Create Verification
+                return $this->processSuccessTransaction(
                     $wallet,
                     $servicePrice,
                     $user,
@@ -214,7 +217,7 @@ class BvnverificationController extends Controller
                     $decodedData
                 );
             } else {
-                // Free Errors (99120012, 99120023, 99120025, etc) -> No Charge + Create Failed Transaction
+                // Other errors (99120012, 99120023, 99120025, etc) -> No Charge + Create Failed Transaction
                 return $this->processFreeTransactionRecord(
                     $user,
                     $serviceField,
@@ -223,7 +226,7 @@ class BvnverificationController extends Controller
             }
 
         } catch (\Exception $e) {
-             return back()->with([
+            return back()->with([
                 'status' => 'error',
                 'message' => 'System Error: ' . $e->getMessage()
             ]);
@@ -249,7 +252,7 @@ class BvnverificationController extends Controller
                 'description' => "BVN Verification - {$serviceField->field_name}",
                 'type' => 'debit',
                 'status' => 'completed',
-                'performed_by'    => $performedBy,
+                'performed_by' => $performedBy,
                 'metadata' => [
                     'service' => 'verification',
                     'service_field' => $serviceField->field_name,
@@ -276,13 +279,28 @@ class BvnverificationController extends Controller
                 'reference' => $transactionRef,
                 'idno' => $bvnData['data']['bvn'],
                 'firstname' => $bvnData['data']['firstName'],
-                'middlename' => $bvnData['data']['middleName'],
+                'middlename' => $bvnData['data']['middleName'] ?? null,
                 'surname' => $bvnData['data']['lastName'],
-                'birthdate' =>  $bvnData['data']['birthday'],
+                'birthdate' => $bvnData['data']['birthday'],
                 'gender' => $bvnData['data']['gender'],
-                'telephoneno' => $bvnData['data']['phoneNumber'],
+                'telephoneno' => $bvnData['data']['phoneNumber'] ?? null,
                 'photo_path' => $bvnData['data']['photo'],
-                'performed_by'    => $performedBy,
+                'email' => $bvnData['data']['email'] ?? null,
+                'stateOfOrigin' => $bvnData['data']['stateOfOrigin'] ?? null,
+                'lgaOfOrigin' => $bvnData['data']['lgaOfOrigin'] ?? null,
+                'maritalStatus' => $bvnData['data']['maritalStatus'] ?? null,
+                'registrationDate' => $bvnData['data']['registrationDate'] ?? null,
+                'enrollmentBank' => $bvnData['data']['enrollmentBank'] ?? null,
+                'enrollmentBranch' => $bvnData['data']['enrollmentBranch'] ?? null,
+                'watchListed' => $bvnData['data']['watchListed'] ?? null,
+                'levelOfAccount' => $bvnData['data']['levelOfAccount'] ?? null,
+                'stateOfResidence' => $bvnData['data']['stateOfResidence'] ?? null,
+                'lgaOfResidence' => $bvnData['data']['lgaOfResidence'] ?? null,
+                'residentialAddress' => $bvnData['data']['residentialAddress'] ?? null,
+                'nationality' => $bvnData['data']['nationality'] ?? 'Nigeria',
+                'nameOnCard' => $bvnData['data']['nameOnCard'] ?? null,
+                'phoneNumber2' => $bvnData['data']['phoneNumber2'] ?? null,
+                'performed_by' => $performedBy,
                 'submission_date' => Carbon::now()
             ]);
 
@@ -323,7 +341,7 @@ class BvnverificationController extends Controller
                 'description' => "BVN Verification - Failed",
                 'type' => 'debit',
                 'status' => 'completed', // Completed because we charged them
-                'performed_by'    => $performedBy,
+                'performed_by' => $performedBy,
                 'metadata' => [
                     'service' => 'verification',
                     'service_field' => $serviceField->field_name,
@@ -346,8 +364,10 @@ class BvnverificationController extends Controller
 
             // Improve User Message based on code
             $msg = $data['respDescription'] ?? 'Verification failed';
-            if (($data['respCode'] ?? '') == '99120020') $msg = 'BVN do not existing';
-            if (($data['respCode'] ?? '') == '99120024') $msg = 'BVN suspend';
+            if (($data['respCode'] ?? '') == '99120020')
+                $msg = 'BVN do not existing';
+            if (($data['respCode'] ?? '') == '99120024')
+                $msg = 'BVN suspend';
 
             return back()->with([
                 'status' => 'error', // Show as error to user
@@ -380,7 +400,7 @@ class BvnverificationController extends Controller
                 'description' => "BVN Verification - Failed: " . ($data['respDescription'] ?? 'Error'),
                 'type' => 'debit', // or 'info'
                 'status' => 'failed',
-                'performed_by'    => $performedBy,
+                'performed_by' => $performedBy,
                 'metadata' => [
                     'service' => 'verification',
                     'service_field' => $serviceField->field_name,
@@ -392,15 +412,18 @@ class BvnverificationController extends Controller
             ]);
 
             $message = $data['respDescription'] ?? 'Verification failed';
-            
-            // Clean up message if needed
-            if (($data['respCode'] ?? '') == '99120012') $message = 'Parameters wrong';
-            if (($data['respCode'] ?? '') == '99120023') $message = 'Identity provided is invalid';
-            if (($data['respCode'] ?? '') == '99120025') $message = 'BVN_PARAMETER_INVALID';
+
+            // Human-friendly translations
+            if (($data['respCode'] ?? '') == '99120012')
+                $message = 'Parameters wrong';
+            if (($data['respCode'] ?? '') == '99120023')
+                $message = 'Identity provided is invalid';
+            if (($data['respCode'] ?? '') == '99120025')
+                $message = 'BVN_PARAMETER_INVALID';
 
             return back()->with([
                 'status' => 'error',
-                'message' => $message 
+                'message' => $message
             ]);
 
         } catch (\Exception $e) {
@@ -412,15 +435,16 @@ class BvnverificationController extends Controller
         }
     }
 
+
     /**
      * Charge for Slip Download
      */
     private function chargeForSlip($user, $fieldCode)
     {
-         // 1. Get Verification Service
-         $service = Service::where('name', 'Verification')
-         ->where('is_active', true)
-         ->first();
+        // 1. Get Verification Service
+        $service = Service::where('name', 'Verification')
+            ->where('is_active', true)
+            ->first();
 
         if (!$service) {
             throw new \Exception('Verification service not available.');
@@ -433,7 +457,7 @@ class BvnverificationController extends Controller
             ->first();
 
         if (!$serviceField) {
-             throw new \Exception('Slip service not available.');
+            throw new \Exception('Slip service not available.');
         }
 
         // 3. Determine service price based on user role
@@ -443,43 +467,43 @@ class BvnverificationController extends Controller
         $wallet = Wallet::where('user_id', $user->id)->firstOrFail();
 
         if ($wallet->status !== 'active') {
-             throw new \Exception('Your wallet is not active.');
+            throw new \Exception('Your wallet is not active.');
         }
 
         if ($wallet->balance < $servicePrice) {
-             throw new \Exception('Insufficient wallet balance.');
+            throw new \Exception('Insufficient wallet balance.');
         }
-        
+
         DB::beginTransaction();
         try {
-             $transactionRef = 'Slip-' . (time() % 1000000000) . '-' . mt_rand(100, 999);
-             $performedBy = $user->first_name . ' ' . $user->last_name;
- 
-             Transaction::create([
-                 'transaction_ref' => $transactionRef,
-                 'user_id' => $user->id,
-                 'amount' => $servicePrice,
-                 'description' => "Slip Download: {$serviceField->field_name}",
-                 'type' => 'debit',
-                 'status' => 'completed',
-                 'performed_by'    => $performedBy,
-                 'metadata' => [
-                     'service' => 'slip_download',
-                     'service_field' => $serviceField->field_name,
-                     'field_code' => $serviceField->field_code,
-                     'user_role' => $user->role,
-                     'price_details' => [
-                         'base_price' => $serviceField->base_price,
-                         'user_price' => $servicePrice,
-                     ],
-                 ],
-             ]);
- 
-             // Deduct wallet balance
-             $wallet->decrement('balance', $servicePrice);
-             
-             DB::commit();
-             return true;
+            $transactionRef = 'Slip-' . (time() % 1000000000) . '-' . mt_rand(100, 999);
+            $performedBy = $user->first_name . ' ' . $user->last_name;
+
+            Transaction::create([
+                'transaction_ref' => $transactionRef,
+                'user_id' => $user->id,
+                'amount' => $servicePrice,
+                'description' => "Slip Download: {$serviceField->field_name}",
+                'type' => 'debit',
+                'status' => 'completed',
+                'performed_by' => $performedBy,
+                'metadata' => [
+                    'service' => 'slip_download',
+                    'service_field' => $serviceField->field_name,
+                    'field_code' => $serviceField->field_code,
+                    'user_role' => $user->role,
+                    'price_details' => [
+                        'base_price' => $serviceField->base_price,
+                        'user_price' => $servicePrice,
+                    ],
+                ],
+            ]);
+
+            // Deduct wallet balance
+            $wallet->decrement('balance', $servicePrice);
+
+            DB::commit();
+            return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -497,14 +521,14 @@ class BvnverificationController extends Controller
             $user = Auth::user();
             // 0. Preliminary Status Checks
             if ($user->status !== 'active') {
-                 return response()->json([
+                return response()->json([
                     "message" => "Error",
                     "errors" => array("Access Denied" => "Your account is currently {$user->status}. Access denied.")
                 ], 403);
             }
 
             $this->chargeForSlip($user, '601'); // Charge for Standard Slip
-            
+
             if (Verification::where('idno', $bvn_no)->exists()) {
                 $veridiedRecord = Verification::where('idno', $bvn_no)
                     ->latest()
@@ -519,7 +543,7 @@ class BvnverificationController extends Controller
                 ], 422);
             }
         } catch (\Exception $e) {
-             return response()->json([
+            return response()->json([
                 "message" => "Error",
                 "errors" => array("Charge Failed" => $e->getMessage())
             ], 422);
@@ -532,7 +556,7 @@ class BvnverificationController extends Controller
             $user = Auth::user();
             // 0. Preliminary Status Checks
             if ($user->status !== 'active') {
-                 return response()->json([
+                return response()->json([
                     "message" => "Error",
                     "errors" => array("Access Denied" => "Your account is currently {$user->status}. Access denied.")
                 ], 403);
@@ -555,28 +579,28 @@ class BvnverificationController extends Controller
             }
         } catch (\Exception $e) {
             return response()->json([
-               "message" => "Error",
-               "errors" => array("Charge Failed" => $e->getMessage())
-           ], 422);
-       }
+                "message" => "Error",
+                "errors" => array("Charge Failed" => $e->getMessage())
+            ], 422);
+        }
     }
 
     public function plasticBVN($bvn_no)
     {
-         try {
+        try {
             $user = Auth::user();
             // 0. Preliminary Status Checks
             if ($user->status !== 'active') {
-                 return back()->with('error', "Your account is currently {$user->status}. Access denied.");
+                return back()->with('error', "Your account is currently {$user->status}. Access denied.");
             }
 
             $this->chargeForSlip($user, '603'); // Charge for Plastic Slip
-            
+
             $repObj = new BVN_PDF_Repository();
             return $repObj->plasticPDF($bvn_no);
-         } catch (\Exception $e) {
-             // For plastic PDF, we might need to return a view or redirect with error since it's a direct link
-             return back()->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            // For plastic PDF, we might need to return a view or redirect with error since it's a direct link
+            return back()->with('error', $e->getMessage());
         }
     }
 }

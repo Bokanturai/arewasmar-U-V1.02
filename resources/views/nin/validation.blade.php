@@ -160,8 +160,7 @@
 
                                                 <!-- NIN -->
                                                 <td>
-                                                    <span class="fw-bold">{{ $submission->nin }}</span>
-                                                    <br>
+                                                    <span class="fw-bold d-block">{{ $submission->nin }}</span>
                                                     <small class="text-primary fw-medium">
                                                         {{ $submission->service_field_name }}
                                                     </small>
@@ -194,7 +193,14 @@
                                                         @endif
 
                                                         <!-- View Comment -->
-                                                        <button type="button" class="btn btn-sm btn-light text-secondary shadow-sm rounded-circle d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#responseModal" data-response="{{ $submission->comment ?? 'No comment yet.' }}" data-bs-toggle="tooltip" title="View Response" style="width: 35px; height: 35px;">
+                                                        <button type="button" class="btn btn-sm btn-light text-secondary shadow-sm rounded-circle d-flex align-items-center justify-content-center" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#commentModal" 
+                                                            data-comment="{{ $submission->comment ?? 'No comment yet.' }}"
+                                                            data-reference="{{ $submission->reference }}"
+                                                            data-file-url="{{ $submission->file_url ?? '' }}"
+                                                            data-approved-by="{{ $submission->approved_by ?? '' }}"
+                                                            data-bs-toggle="tooltip" title="View Response" style="width: 35px; height: 35px;">
                                                             <i class="bi bi-chat-left-text fs-16"></i>
                                                         </button>
                                                     </div>
@@ -226,74 +232,13 @@
                 </div>
             </div> <!-- End Row -->
 
-            <!-- Response Modal -->
-            <div class="modal fade" id="responseModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
-                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+               {{-- Comment Modal --}}
+            @include('pages.comment')
 
-                        <!-- Header -->
-                        <div class="modal-header bg-gradient-primary text-white py-3 px-3 py-md-4 px-md-4 border-bottom-0" style="background: linear-gradient(135deg, var(--bs-primary) 0%, #2a52be 100%);">
-                            <div class="d-flex align-items-center gap-2 gap-sm-3">
-                                <div class="bg-white bg-opacity-25 p-2 rounded-circle d-none d-sm-block">
-                                    <i class="bi bi-chat-left-text fs-15 text-white"></i>
-                                </div>
-                                <div>
-                                    <h5 class="modal-title text-white mb-0 fw-bold fs-15">Validation Response</h5>
-                                    <p class="small text-white-50 mb-0">Details of your submission</p>
-                                </div>
-                            </div>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
+          
 
-                        <!-- Body -->
-                        <div class="modal-body p-3 p-md-4 bg-light" style="font-size: 1rem; min-height: 200px;">
-                            <!-- Loading State -->
-                            <div id="responseLoading" class="text-center text-secondary py-4">
-                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
-                                <h6 class="mb-0 fw-medium">Processing request...</h6>
-                            </div>
 
-                            <!-- Response Content -->
-                            <div id="responseContentWrapper" class="d-none">
-                                <div class="bg-white p-3 p-md-4 rounded-4 shadow-sm border mb-0">
-                                    <pre id="responseContent" class="mb-0 text-dark" style="white-space: pre-wrap; font-size: 0.9rem; font-family: inherit; font-family: var(--bs-font-sans-serif);"></pre>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Footer -->
-                        <div class="modal-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center py-3 px-3 px-md-4 gap-3">
-                            <!-- Quick Access Buttons -->
-                            <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 w-100 w-sm-auto">
-                                <a href="#" class="btn btn-outline-primary rounded-pill px-4 fw-medium shadow-sm transition-all hover-lift w-100 w-sm-auto mb-1 mb-sm-0">
-                                    <i class="bi bi-file-earmark-text me-2"></i> BVN Report
-                                </a>
-                                <a href="#" class="btn btn-outline-warning rounded-pill px-4 fw-medium shadow-sm transition-all hover-lift w-100 w-sm-auto mb-1 mb-sm-0">
-                                    <i class="bi bi-award me-2"></i> VIP Access
-                                </a>
-                                <a href="#" class="btn btn-outline-info rounded-pill px-4 fw-medium shadow-sm transition-all hover-lift w-100 w-sm-auto mb-1 mb-sm-0">
-                                    <i class="bi bi-question-circle me-2"></i> Complain
-                                </a>
-                            </div>
-                            <!-- Encouragement Text -->
-                            <div id="encouragement" class="text-success fw-medium small d-flex align-items-center gap-1 w-100 w-sm-auto justify-content-center">
-                                <i class="bi bi-check-circle-fill"></i> Reviewed successfully
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <style>
-                .hover-lift:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-                }
-                .transition-all {
-                    transition: all .2s ease-in-out;
-                }
-            </style>
 
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -323,36 +268,6 @@
                         });
                     }
 
-                    /* ---------------------------------------------------
-                       MODERN RESPONSE MODAL HANDLING
-                    ----------------------------------------------------*/
-                    const responseModal = document.getElementById('responseModal');
-                    if (responseModal) {
-                        responseModal.addEventListener('show.bs.modal', function(event) {
-                            // Button that triggered the modal
-                            const button = event.relatedTarget;
-                            // Extract info from data-bs-* attributes
-                            const responseText = button.getAttribute('data-response');
-
-                            // Update the modal's content.
-                            const modalBodyContentWrapper = responseModal.querySelector('#responseContentWrapper');
-                            const modalBodyContent = responseModal.querySelector('#responseContent');
-                            const modalLoading = responseModal.querySelector('#responseLoading');
-
-                            if (modalLoading) modalLoading.classList.add('d-none');
-                            if (modalBodyContentWrapper && modalBodyContent) {
-                                modalBodyContentWrapper.classList.remove('d-none');
-                                modalBodyContent.textContent = responseText;
-                            }
-                        });
-
-                        responseModal.addEventListener('hidden.bs.modal', function(event) {
-                            const modalBodyContentWrapper = responseModal.querySelector('#responseContentWrapper');
-                            const modalLoading = responseModal.querySelector('#responseLoading');
-                            if (modalLoading) modalLoading.classList.remove('d-none');
-                            if (modalBodyContentWrapper) modalBodyContentWrapper.classList.add('d-none');
-                        });
-                    }
 
                 }); // DOM Loaded END
             </script>
