@@ -3,6 +3,7 @@
 
     @push('styles')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         /* Minimal custom styling for specialized receipt features */
         .receipt-card {
@@ -115,8 +116,8 @@
                             </button>
                         </div>
                         <div class="col-6">
-                            <button onclick="downloadAsPNG()" class="btn btn-outline-dark w-100 rounded-3 py-2 fw-bold extra-small shadow-sm d-flex align-items-center justify-content-center">
-                                <i class="bi bi-camera me-2"></i>Snapshot
+                            <button onclick="shareAsPDF()" class="btn btn-outline-dark w-100 rounded-3 py-2 fw-bold extra-small shadow-sm d-flex align-items-center justify-content-center">
+                                <i class="bi bi-share me-2"></i>Share
                             </button>
                         </div>
                         @if(session('token'))
@@ -156,38 +157,61 @@
             }
         });
 
-        // Download as PNG
-        function downloadAsPNG() {
+        // Share as PDF functionality
+        async function shareAsPDF() {
+            const { jsPDF } = window.jspdf;
             const receipt = document.getElementById('receipt-capture');
             const noPrintElements = receipt.querySelectorAll('.no-print');
             
             // Hide elements that shouldn't be in the snapshot
             noPrintElements.forEach(el => el.style.display = 'none');
             
-            html2canvas(receipt, {
-                backgroundColor: '#f8f9fa',
-                scale: 3, 
-                logging: false,
-                useCORS: true,
-                onclone: (clonedDoc) => {
-                    // Ensure the card looks perfect in the clone
-                    const clonedReceipt = clonedDoc.getElementById('receipt-capture');
-                    clonedReceipt.classList.remove('shadow-lg');
-                    clonedReceipt.style.border = '1px solid #eee';
-                }
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `ArewaSmart_Receipt_{{ $ref }}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+            try {
+                const canvas = await html2canvas(receipt, {
+                    backgroundColor: '#f8f9fa',
+                    scale: 2, 
+                    logging: false,
+                    useCORS: true,
+                    onclone: (clonedDoc) => {
+                        const clonedReceipt = clonedDoc.getElementById('receipt-capture');
+                        clonedReceipt.classList.remove('shadow-lg');
+                        clonedReceipt.style.border = '1px solid #eee';
+                    }
+                });
                 
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width / 2, canvas.height / 2]
+                });
+                
+                pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2);
+                const pdfBlob = pdf.output('blob');
+                const fileName = `ArewaSmart_Receipt_{{ $ref }}.pdf`;
+                const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+                // Check if sharing is supported
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Transaction Receipt',
+                        text: 'Receipt for my transaction on Arewa Smart Idea.'
+                    });
+                } else {
+                    // Fallback to download
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(pdfBlob);
+                    link.download = fileName;
+                    link.click();
+                }
+            } catch (err) {
+                console.error('Sharing failed:', err);
+                alert('Sharing failed. Please try the Print button.');
+            } finally {
                 // Show elements back
                 noPrintElements.forEach(el => el.style.display = 'block');
-            }).catch(err => {
-                console.error('Download failed:', err);
-                noPrintElements.forEach(el => el.style.display = 'block');
-                alert('Snapshot failed. Please try again or use the Print button.');
-            });
+            }
         }
 
         function copyToClipboard(text) {

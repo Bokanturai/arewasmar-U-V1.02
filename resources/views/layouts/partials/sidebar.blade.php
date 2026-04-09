@@ -160,6 +160,23 @@
                     </ul>
                 </li>
 
+                <!-- Gift Card Services -->
+                <li class="submenu">
+                    <a href="javascript:void(0);" class="{{ request()->routeIs('gift-card.index', 'gift-card.generate', 'gift-card.redeem') ? 'active subdrop' : '' }}">
+                        <i class="ti ti-gift"></i>
+                        <span>Gift Cards</span>
+                        <span class="badge rounded-pill bg-danger text-white border border-white ms-2" style="font-size: 8px; padding: 2px 5px; animation: pulse-red-sidebar 2s infinite;">
+                            HOT
+                        </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul style="{{ request()->routeIs('gift-card.index', 'gift-card.generate', 'gift-card.redeem') ? 'display: block;' : 'display: none;' }}">
+                        <li><a href="{{ route('gift-card.index') }}" class="{{ request()->routeIs('gift-card.index') ? 'active' : '' }}">My Cards</a></li>
+                        <li><a href="{{ route('gift-card.generate') }}" class="{{ request()->routeIs('gift-card.generate') ? 'active' : '' }}">Generate Card</a></li>
+                        <li><a href="{{ route('gift-card.index', ['showRedeemModal' => 1]) }}" class="{{ request()->routeIs('gift-card.redeem') ? 'active' : '' }}">Redeem Card</a></li>
+                    </ul>
+                </li>
+
                 <!-- NIN Services -->
                 <li class="submenu">
                     <a href="javascript:void(0);" class="{{ request()->routeIs('nin-modification') ? 'active subdrop' : '' }}">

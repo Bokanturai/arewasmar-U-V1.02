@@ -14,6 +14,7 @@
                         ['route' => route('wallet'), 'icon' => 'ti-wallet', 'color' => 'primary', 'name' => 'Wallet'],
                         ['route' => route('airtime'), 'icon' => 'ti-phone-call', 'color' => 'info', 'name' => 'Airtime', 'hot' => true],
                         ['modal' => '#dataplans', 'icon' => 'ti-world', 'color' => 'warning', 'name' => 'Data', 'hot' => true],
+                        ['route' => route('gift-card.index'), 'icon' => 'ti-gift', 'color' => 'info', 'name' => 'Gift Card', 'hot' => true],
                         ['route' => route('electricity'), 'icon' => 'ti-bolt', 'color' => 'danger', 'name' => 'Electricity'],
                         ['route' => route('education'), 'icon' => 'ti-school', 'color' => 'success', 'name' => 'Education'],
                         ['route' => route('jamb'), 'icon' => 'ti-certificate', 'color' => 'secondary', 'name' => 'Jamb Pin'],

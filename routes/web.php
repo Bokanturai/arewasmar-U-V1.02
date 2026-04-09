@@ -39,6 +39,8 @@ Route::get('/', function () {
 
 
 
+Route::post('/support/send', [SupportController::class, 'sendContactMessage'])->name('support.send');
+
 Route::middleware(['auth'])->group(function () {
 
 
@@ -318,6 +320,17 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('ai')->group(function () {
         Route::post('/summarize', [AiCommentController::class, 'summarize'])->name('ai.summarize');
         Route::post('/ask', [AiCommentController::class, 'ask'])->name('ai.ask');
+    });
+
+    // Gift Card Routes
+    Route::prefix('gift-cards')->name('gift-card.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Action\GiftCardController::class, 'index'])->name('index');
+        Route::get('/generate', [\App\Http\Controllers\Action\GiftCardController::class, 'create'])->name('generate');
+        Route::post('/store', [\App\Http\Controllers\Action\GiftCardController::class, 'store'])->name('store');
+        Route::get('/redeem', [\App\Http\Controllers\Action\GiftCardController::class, 'redeemPage'])->name('redeem');
+        Route::post('/redeem', [\App\Http\Controllers\Action\GiftCardController::class, 'processRedeem'])->name('processRedeem');
+        Route::get('/code/{giftCard}', [\App\Http\Controllers\Action\GiftCardController::class, 'showCode'])->name('showCode');
+        Route::get('/thankyou', [\App\Http\Controllers\Action\GiftCardController::class, 'thankYou3'])->name('thankyou3');
     });
 
 });

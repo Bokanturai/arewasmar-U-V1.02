@@ -13,6 +13,45 @@ use App\Jobs\ProcessAISupportReply;
 
 class SupportController extends Controller
 {
+    public function sendContactMessage(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        // If user is logged in, create a ticket
+        if (Auth::check()) {
+            $ticket = SupportTicket::create([
+                'user_id' => Auth::id(),
+                'ticket_reference' => 'TKT-' . strtoupper(Str::random(8)),
+                'subject' => $request->subject,
+                'status' => 'open',
+                'priority' => 'medium',
+            ]);
+
+            SupportMessage::create([
+                'support_ticket_id' => $ticket->id,
+                'user_id' => Auth::id(),
+                'message' => $request->message,
+                'is_admin_reply' => false,
+            ]);
+
+            // Trigger AI Support Reply Synchronously (No Queue)
+            ProcessAISupportReply::dispatchSync($ticket);
+
+            return back()->with('success', 'Your message has been sent. A support ticket (#' . $ticket->ticket_reference . ') has been created for you.');
+        }
+
+        // For guest users, we just show a success message as a fallback 
+        // because the existing support_tickets table requires a user_id.
+        // TODO: In a future update, modify DB to allow guest tickets or send an email.
+
+        return back()->with('success', 'Thank you for contacting us! Our team will review your message and get back to you soon.');
+    }
+
     public function index()
     {
         $tickets = SupportTicket::where('user_id', Auth::id())

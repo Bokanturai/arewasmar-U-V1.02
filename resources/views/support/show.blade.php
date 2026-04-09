@@ -2,7 +2,7 @@
     <title>Arewa Smart - Ticket #{{ $ticket->ticket_reference }}</title>
     <style>
         .chat-wrapper {
-            height: calc(100vh - 250px);
+            height: calc(100vh - 180px);
             display: flex;
             flex-direction: column;
             border-radius: 16px;
@@ -10,7 +10,7 @@
         }
 
         .message-bubble {
-            max-width: 80%;
+            max-width: 85%;
             border-radius: 15px;
             position: relative;
             transition: all 0.2s ease;

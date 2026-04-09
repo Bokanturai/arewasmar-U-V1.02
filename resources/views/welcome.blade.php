@@ -3,1038 +3,153 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>Arewa Smart - {{ $title ?? 'Welcome to Arewa Smart Idea' }}</title>
+        <title>Arewa Smart - Utility & Identity Services</title>
 
+        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
+        
+        <!-- FontAwesome for icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/img/logo/app-logo.png') }}">
 
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/img/logo/logo.png') }}">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/img/apple-touch-icon.png') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/icons/feather/feather.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/tabler-icons/tabler-icons.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/fontawesome/css/fontawesome.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/plugins/fontawesome/css/all.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/landing.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-
-        <!-- Open Graph / WhatsApp Meta Tags -->
-        <meta property="og:title" content="Arewa Smart Idea - Innovative Digital Solutions">
-        <meta property="og:description" content="Empowering northern Nigeria through innovative digital solutions and smart technology services.">
-        <meta property="og:image" content="{{ asset('assets/img/logo/logo.png') }}">
-        <meta property="og:url" content="{{ url('/') }}">
-        <meta property="og:type" content="website">
-
-        <style>
-            /* Premium Design Enhancements - Orange Theme */
-            :root {
-                --primary-color: #F26522; /* Premium Orange */
-                --primary-dark: #d94e0f; /* Darker Orange */
-                --accent-color: #ffffff; /* White for contrast */
-                --text-light: #f5f5f5;
-            }
-
-            body {
-                font-family: 'Figtree', sans-serif;
-            }
-
-            /* Top Bar */
-            .top-bar {
-                background: linear-gradient(90deg, #1a1a1a, #000);
-                color: #fff;
-                padding: 10px 0;
-                font-size: 0.9rem;
-                border-bottom: 1px solid rgba(242, 101, 34, 0.2);
-            }
-            .top-bar i {
-                color: var(--primary-color);
-                margin-right: 5px;
-            }
-
-            /* Hero Glassmorphism */
-            .hero-content {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                padding: 3rem;
-                border-radius: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px 0 rgba(242, 101, 34, 0.2);
-            }
-
-            /* Buttons */
-            .btn-primary {
-                background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
-                border: none;
-                transition: all 0.3s ease;
-                color: #fff;
-            }
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(242, 101, 34, 0.4);
-                background: linear-gradient(45deg, var(--primary-dark), var(--primary-color));
-                color: #fff;
-            }
-            
-            .btn-secondary-outline {
-                background: transparent;
-                border: 2px solid var(--primary-color);
-                color: #fff;
-                 transition: all 0.3s ease;
-            }
-            .btn-secondary-outline:hover {
-                background: var(--primary-color);
-                color: #fff;
-                transform: translateY(-2px);
-            }
-
-            /* WhatsApp Float */
-            .whatsapp-float {
-                position: fixed;
-                bottom: 30px;
-                right: 30px;
-                background: #25d366;
-                color: white;
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 32px;
-                box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
-                z-index: 9999;
-                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                text-decoration: none;
-            }
-            .whatsapp-float:hover {
-                transform: scale(1.1) rotate(10deg);
-                background: #128C7E;
-                color: white;
-            }
-
-            /* Animations */
-            @keyframes pulse-orange {
-                0% { box-shadow: 0 0 0 0 rgba(242, 101, 34, 0.4); }
-                70% { box-shadow: 0 0 0 15px rgba(242, 101, 34, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(242, 101, 34, 0); }
-            }
-            
-            /* Footer Banner Styles */
-            .privacy-banner {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background: #ffffff;
-                padding: 1.5rem;
-                box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-                z-index: 10000;
-                border-top: 1px solid #eee;
-                display: none; /* Hidden by default, shown via JS */
-                animation: slideUp 0.5s ease-out;
-            }
-
-            @keyframes slideUp {
-                from { transform: translateY(100%); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-
-            .privacy-banner .banner-content {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                justify-content: space-between;
-                max-width: 1200px;
-                margin: 0 auto;
-            }
-
-            .privacy-icon {
-                color: var(--primary-color);
-                font-size: 1.5rem;
-                margin-right: 15px;
-            }
-            
-            .privacy-text h5 {
-                font-weight: 700;
-                margin-bottom: 5px;
-                font-size: 1.1rem;
-                color: #000;
-            }
-            
-            .privacy-text p {
-                font-size: 0.9rem;
-                color: #555;
-                margin-bottom: 0;
-                max-width: 700px;
-            }
-
-            .banner-actions {
-                display: flex;
-                align-items: center;
-                margin-top: 10px;
-            }
-
-            .btn-outline-secondary {
-                border-color: #ccc;
-                color: #333;
-                background: transparent;
-                margin-right: 10px;
-            }
-            .btn-outline-secondary:hover {
-                background: #eee;
-                color: #000;
-            }
-
-            .link-primary {
-                color: var(--primary-color) !important;
-                text-decoration: underline;
-                margin-right: 20px;
-                font-weight: 600;
-                cursor: pointer;
-            }
-
-            @media (max-width: 768px) {
-                .banner-actions {
-                    margin-top: 20px;
-                    width: 100%;
-                    justify-content: flex-end;
-                }
-                .link-primary {
-                    display: block;
-                    margin-bottom: 10px;
-                    margin-right: 0;
-                }
-            }
-            
-            /* Modal Styles */
-            .data-protection-modal .modal-content {
-                border-radius: 15px;
-                border: none;
-                background: #fff;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            }
-            .data-protection-modal .modal-header {
-                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-                color: white;
-                border-top-left-radius: 15px;
-                border-top-right-radius: 15px;
-                border-bottom: none;
-            }
-            .data-protection-modal .modal-body {
-                max-height: 60vh;
-                overflow-y: auto;
-                padding: 2rem;
-                font-size: 0.95rem;
-                line-height: 1.6;
-                color: #333;
-            }
-            .data-protection-modal .modal-footer {
-                border-top: 1px solid #eee;
-                background: #f9f9f9;
-                border-bottom-left-radius: 15px;
-                border-bottom-right-radius: 15px;
-            }
-            .policy-section {
-                margin-bottom: 20px;
-            }
-            .policy-section h5 {
-                color: var(--primary-color);
-                font-weight: 600;
-                margin-bottom: 10px;
-                border-left: 3px solid var(--primary-dark);
-                padding-left: 10px;
-            }
-
-            /* Header Mobile Fixes - IMPROVED */
-            header {
-                background: #fff;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                position: sticky;
-                top: 0;
-                z-index: 1000;
-                width: 100%;
-            }
-
-            .header-container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 15px 20px;
-                position: relative;
-            }
-
-            .logo {
-                display: flex;
-                align-items: center;
-                z-index: 1001;
-            }
-
-            .mobile-menu {
-                display: none;
-                font-size: 24px;
-                cursor: pointer;
-                color: var(--primary-color);
-                z-index: 1001;
-            }
-
-            nav ul {
-                display: flex;
-                list-style: none;
-                margin: 0;
-                padding: 0;
-                align-items: center;
-            }
-
-            nav ul li {
-                margin-left: 25px;
-            }
-
-            nav ul li a {
-                color: #333;
-                text-decoration: none;
-                font-weight: 500;
-                transition: color 0.3s ease;
-            }
-
-            nav ul li a:hover {
-                color: var(--primary-color);
-            }
-
-            /* Install App Button - Always Visible */
-            .install-app-btn {
-                display: inline-block !important;
-                background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
-                color: white !important;
-                padding: 8px 15px !important;
-                border-radius: 20px;
-                transition: all 0.3s ease;
-            }
-
-            .install-app-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(242, 101, 34, 0.3);
-                color: white !important;
-            }
-
-            /* Mobile Menu Styles */
-            @media (max-width: 991px) {
-                .mobile-menu {
-                    display: block !important;
-                }
-
-                nav ul {
-                    position: fixed;
-                    top: 0;
-                    right: -100%;
-                    width: 280px;
-                    height: 100vh;
-                    background: white;
-                    flex-direction: column;
-                    padding: 80px 20px 30px;
-                    transition: right 0.3s ease;
-                    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
-                    z-index: 1000;
-                    align-items: flex-start;
-                }
-
-                nav ul.active {
-                    right: 0;
-                }
-
-                nav ul li {
-                    margin: 15px 0;
-                    width: 100%;
-                }
-
-                nav ul li a {
-                    display: block;
-                    padding: 10px 15px;
-                    width: 100%;
-                }
-
-                nav ul li a.btn-primary {
-                    margin-top: 10px;
-                    text-align: center;
-                }
-
-                .install-app-btn {
-                    display: inline-block !important;
-                    width: auto !important;
-                }
-            }
-
-            /* Small phones */
-            @media (max-width: 480px) {
-                .install-app-btn {
-                    padding: 6px 12px !important;
-                    font-size: 14px;
-                }
-                
-                .btn-primary {
-                    padding: 8px 15px !important;
-                    font-size: 14px;
-                }
-            }
-        </style>
+        <!-- Custom Styles -->
+        <link rel="stylesheet" href="{{ asset('assets/css/welcome.css') }}">
     </head>
+    <body>
+        <!-- Mobile Sidebar Overlay -->
+        <div class="overlay" id="mobile-overlay"></div>
 
-    <body class="bg-white">
-        <div id="global-loader" style="display: none;">
-            <div class="page-loader"></div>
-        </div>
-
-    <!-- Header - FIXED -->
-    <header>
-        <div class="container header-container">
-            <a href="#" class="logo">
-                <img src="{{ asset('assets/img/logo/app-logo.png') }}" alt="Arewa Smart Idea Logo" style="height: 30px; margin-right: 120px;">
+        <!-- Header -->
+        <header class="header">
+            <a href="/" class="logo">
+                <img src="{{ asset('assets/img/logo/app-logo.png') }}" alt="Arewa Smart Logo" style="height: 40px;">
             </a>
             
-            <!-- Mobile Menu Toggle - Positioned on the right -->
-            <div class="mobile-menu">
-                <i class="fas fa-bars"></i>
-            </div>
-            
-            <!-- Navigation Menu -->
-            <nav>
-                <ul>
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#services">Services</a></li>
-                    <li><a href="#partners">Partners</a></li>
-                    <li><a href="#support">Support</a></li>
-                    <li><a href="#about-us">About US</a></li>
-                    <li><a href="https://api.arewasmart.com.ng/">API</a></li>
-                    <li><a href="javascript:void(0);" class="install-app-btn" title="Install Application">📱 Install App</a></li>
-                    <li><a href="{{route ('login')}}" class="btn btn-primary text-white">Get Started</a></li>
-                </ul>
+            <nav class="nav-links" id="nav-links">
+                <a href="#home">Home</a>
+                <a href="#services">Services</a>
+                <a href="#about">About</a>
+                <a href="#support">Contact Us</a>
+                <a href="https://api.arewasmart.com.ng/docs">Api Services</a>
+                <a href="#pricing">Pricing</a>
+
+
+                <!-- Auth Buttons for Mobile Inside Navigation -->
+                <div class="auth-buttons mobile-auth">
+                    @if (Route::has('login'))
+                        @auth
+                            <a href="{{ url('/dashboard') }}" class="btn btn-primary">Dashboard</a>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-outline">Log in</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
+                            @endif
+                        @endauth
+                    @endif
+                </div>
             </nav>
-        </div>
-    </header>
 
-    <!-- Rest of your content remains the same -->
-    <!-- Hero Section -->
-    <section class="hero" id="home" style="background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(50, 0, 0, 0.6)), 
-         url('{{ asset('assets/img/landing/user5.png') }}') no-repeat center center/cover; min-height: 100vh; display: flex; align-items: center;">
-        <div class="container hero-content text-center">
-            <h1 class="text-white mb-4" data-aos="fade-down" data-aos-duration="1000" style="font-size: 3.5rem; font-weight: 700;">
-                Welcome to Arewa Smart Idea
-            </h1>
-            <p class="text-white mb-5" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000" style="font-size: 1.25rem; max-width: 800px; margin: 0 auto;">
-                Empowering northern Nigeria through innovative digital solutions and smart technology services. Join us in building a smarter, more connected future.
-            </p>
-            <div class="hero-btns" data-aos="fade-up" data-aos-delay="400" data-aos-duration="1000">
-                <a href="{{route ('register')}}" class="btn btn-primary btn-lg me-3" style="padding: 12px 30px; border-radius: 30px;">
-                    Get Started
-                </a>
-                <a href="{{route ('login')}}" class="btn btn-secondary-outline btn-lg me-3" style="padding: 12px 30px; border-radius: 30px;">
-                    Login Now
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Services Section -->
-   @include('pages.landing.services')
-
-
-   <!-- Testimonials Section -->
-    <section id="testimonials" class="testimonials-section" style="padding: 100px 0; background: linear-gradient(135deg, #F26522 0%, #C44D17 100%); position: relative; overflow: hidden;">
-        <!-- Background Patterns -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 30px 30px;"></div>
-        
-        <div class="container" style="position: relative; z-index: 2;">
-            <div class="section-title text-center mb-5" data-aos="fade-up">
-                <h4 style="color: #ffffff; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">Testimonials</h4>
-                <h2 style="color: #fff; font-weight: 800; font-size: 2.5rem;">Trusted by Leaders</h2>
-                <hr style="width: 60px; height: 3px; background: #ffffff; margin: 15px auto; border: none;">
-                <p class="text-white-50" style="max-width: 600px; margin: 0 auto; font-size: 1.1rem;">
-                    See what our partners and clients have to say about their experience working with Arewa Smart Idea.
-                </p>
-            </div>
-
-            <div class="row g-4">
-                <!-- Testimonial 1 -->
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-                    <div class="testimonial-card-premium">
-                        <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
-                        <p class="review-text">“Arewa Smart transformed our operations with cutting-edge solutions. Their support team is always responsive and professional! Truly a game changer for our business.”</p>
-                        <div class="reviewer-info">
-                            <img src="{{ asset('assets/img/users/user-08.jpg') }}" alt="Abdulrahman Musa">
-                            <div>
-                                <h4>Abdulrahman Musa</h4>
-                                <span>CEO, NorthernTech</span>
-                                <div class="stars">
-                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="header-right">
+                <!-- Auth Buttons for Desktop Header -->
+                <div class="auth-buttons desktop-auth">
+                    @if (Route::has('login'))
+                        @auth
+                            <a href="{{ url('/dashboard') }}" class="btn btn-primary">Dashboard</a>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-outline">Log in</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
+                            @endif
+                        @endauth
+                    @endif
                 </div>
 
-                <!-- Testimonial 2 -->
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="testimonial-card-premium">
-                        <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
-                        <p class="review-text">“Working with Arewa Smart has been a seamless experience. Their expertise and attention to detail are unmatched. They delivered exactly what we needed, on time.”</p>
-                        <div class="reviewer-info">
-                            <img src="{{ asset('assets/img/users/user-34.jpg') }}" alt="Fatima Bello">
-                            <div>
-                                <h4>Fatima Bello</h4>
-                                <span>Manager, Arewa Logistics</span>
-                                <div class="stars">
-                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                </div>
+                <!-- Hamburger Menu Icon -->
+                <div class="menu-toggle" id="mobile-menu">
+                    <i class="fa-solid fa-bars"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <h1>Smart Solutions for <span>Identity & Utility Bills</span></h1>
+                <p>Welcome to the ultimate platform for instant BVN searches, NIN modifications, utility bill payments, Spry Gift Cards, and cheap data top-ups. Experience fast, secure, and automated services 24/7.</p>
+                <div class="hero-buttons">
+                    @if (Route::has('register'))
+                        <a href="{{ route('register') }}" class="btn btn-primary">Get Started Now</a>
+                    @endif
+                    <a href="{{ route('login') }}" class="btn btn-outline">Login Now</a>
+                </div>
+            </div>
+
+            <div class="hero-image">
+                <div class="chatbot-wrapper">
+                    <div class="blob blob-1"></div>
+                    <div class="blob blob-2"></div>
+                    <div class="chatbot-container">
+                        <div class="chat-header">
+                            <div class="bot-avatar">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="chat-header-info">
+                                <h3>Smart AI Assistant</h3>
+                                <p>Online & Ready to Help</p>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Testimonial 3 -->
-                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                    <div class="testimonial-card-premium">
-                        <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
-                        <p class="review-text">“The quality of service and support we’ve received from Arewa Smart is outstanding. Highly recommended for any business looking to scale digitally.”</p>
-                        <div class="reviewer-info">
-                            <img src="{{ asset('assets/img/users/user-01.jpg') }}" alt="Emeka Johnson">
-                            <div>
-                                <h4>Emeka Johnson</h4>
-                                <span>IT Director, SmartLink Ltd</span>
-                                <div class="stars">
-                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <div class="chat-body" id="chatBody">
+                            <div class="chat-message bot-message" style="animation-delay: 0.2s;">
+                                Hello there! 👋 Welcome to Arewa Smart. I'm your AI assistant.
+                            </div>
+                            <div class="chat-message bot-message" style="animation-delay: 0.6s;">
+                                I can automate your requests instantly. Check out our services:
+                                <div class="chat-services">
+                                    <span class="service-pill">BVN Search</span>
+                                    <span class="service-pill">NIN Modification</span>
+                                    <span class="service-pill">Electricity Bill</span>
+                                    <span class="service-pill">Buy Data</span>
+                                    <span class="service-pill">Spry Gift Card</span>
+                                    <span class="service-pill">Bonus</span>
                                 </div>
                             </div>
+                            <div class="chat-message bot-message" style="animation-delay: 1s;">
+                                How can I assist you today?
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" class="chat-input" placeholder="Ask me about our services...">
+                            <button id="sendBtn" class="chat-submit">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <style>
-            .testimonial-card-premium {
-                background: rgba(255, 255, 255, 0.05);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 40px 30px;
-                border-radius: 20px;
-                color: white;
-                height: 100%;
-                transition: all 0.3s ease;
-                position: relative;
-            }
-            .testimonial-card-premium:hover {
-                background: rgba(255, 255, 255, 0.1);
-                transform: translateY(-5px);
-            }
-            .quote-icon {
-                font-size: 2rem;
-                color: #ffffff;
-                margin-bottom: 20px;
-                opacity: 0.5;
-            }
-            .review-text {
-                font-size: 1.05rem;
-                line-height: 1.8;
-                margin-bottom: 30px;
-                font-style: italic;
-                opacity: 0.9;
-            }
-            .reviewer-info {
-                display: flex;
-                align-items: center;
-            }
-            .reviewer-info img {
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                object-fit: cover;
-                margin-right: 15px;
-                border: 2px solid #ffffff;
-            }
-            .reviewer-info h4 {
-                font-size: 1.1rem;
-                font-weight: 700;
-                margin-bottom: 2px;
-                color: #fff;
-            }
-            .reviewer-info span {
-                font-size: 0.85rem;
-                color: rgba(255, 255, 255, 0.7);
-                display: block;
-                margin-bottom: 5px;
-            }
-            .stars {
-                color: #ffffff;
-                font-size: 0.8rem;
-            }
-        </style>
-    </section>
-
-    <!-- about us -->
-    @include('pages.landing.about-us')
+        </section>
 
 
-    <!-- Partners Section -->
-    <section class="partners" id="partners" style="padding: 80px 0; background-color: #fff;">
-        <div class="container">
-            <div class="section-title text-center mb-5" data-aos="fade-up">
-                <h4 style="color: #F26522; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">Our Partners</h4>
-                <h2 style="color: #1a1a1a; font-weight: 800; font-size: 2.5rem;">Trusted Collaborations</h2>
-                <hr style="width: 60px; height: 3px; background: #F26522; margin: 15px auto; border: none;">
-                <p class="text-muted" style="max-width: 600px; margin: 0 auto; font-size: 1.1rem;">
-                    We proudly collaborate with leading organizations to deliver excellence and innovation.
-                </p>
-            </div>
+        <!-- Our Services -->
+       @include('pages.welcome.services')
 
-            <div class="row align-items-center justify-content-center g-5">
-                <div class="col-6 col-md-4 col-lg-2 text-center" data-aos="fade-up" data-aos-delay="100">
-                    <img src="{{ asset('assets/img/partner/zepa.png') }}" alt="Zepa" class="partner-logo-premium">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2 text-center" data-aos="fade-up" data-aos-delay="200">
-                    <img src="{{ asset('assets/img/partner/biyanow.png') }}" alt="BiyaNow" class="partner-logo-premium">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2 text-center" data-aos="fade-up" data-aos-delay="300">
-                    <img src="{{ asset('assets/img/partner/palmpay.png') }}" alt="PalmPay" class="partner-logo-premium">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2 text-center" data-aos="fade-up" data-aos-delay="400">
-                    <img src="{{ asset('assets/img/partner/jamb.png') }}" alt="JAMB" class="partner-logo-premium">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2 text-center" data-aos="fade-up" data-aos-delay="500">
-                    <img src="{{ asset('assets/img/partner/nimc1.png') }}" alt="NIMC" class="partner-logo-premium">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2 text-center" data-aos="fade-up" data-aos-delay="600">
-                    <img src="{{ asset('assets/img/partner/bvnlogo.png') }}" alt="BVN" class="partner-logo-premium">
-                </div>
-            </div>
-        </div>
+        <!-- About Us -->
+       @include('pages.welcome.about-us')
 
-        <style>
-            .partner-logo-premium {
-                max-width: 100%;
-                height: auto;
-                max-height: 60px;
-                filter: grayscale(100%);
-                opacity: 0.6;
-                transition: all 0.4s ease;
-            }
-            .partner-logo-premium:hover {
-                filter: grayscale(0%);
-                opacity: 1;
-                transform: scale(1.1);
-            }
-        </style>
-    </section>
-
-    @include('pages.landing.support')
-    
-    <!-- Footer -->
-    <footer style="background: #111827; color: #fff; padding: 80px 0 30px; position: relative; overflow: hidden; padding-bottom: 100px;">
-        <!-- Background Decoration -->
-        <div style="position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: radial-gradient(circle, rgba(242, 101, 34, 0.05) 0%, rgba(0,0,0,0) 70%);"></div>
-
-        <div class="container">
-            <div class="row g-5">
-                <!-- Company Info -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="footer-logo mb-4">
-                        <img src="{{ asset('assets/img/logo/app-logo.png') }}" alt="Logo" style="height: 50px; width: auto;">
-                    </div>
-                    <h2 style="color: #F26522; font-weight: 700; margin-bottom: 20px;">Arewa Smart Idea</h2>
-                    <p style="color: rgba(255,255,255,0.7); line-height: 1.8; margin-bottom: 25px;">
-                        Providing innovative technology solutions to help businesses thrive in the digital world. We are committed to excellence and sustainable growth in Northern Nigeria.
-                    </p>
-                    <div class="social-links">
-                        <a href="https://www.facebook.com/share/184dBwK8HX/" class="footer-social"><i class="fab fa-facebook-f"></i></a>
-                        <a href="https://www.tiktok.com/@bokanturai90?_r=1&_t=ZS-94PAsuRcuPQ" class="footer-social"><i class="fab fa-tiktok"></i></a>
-                        <a href="#" class="footer-social"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#" class="footer-social"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-                
-                <!-- Quick Links -->
-                <div class="col-lg-2 col-md-6">
-                    <h3 style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-bottom: 25px; border-bottom: 2px solid #F26522; display: inline-block; padding-bottom: 5px;">Quick Links</h3>
-                    <ul class="footer-links list-unstyled">
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#services">Services</a></li>
-                        <li><a href="#partners">Partners</a></li>
-                        <li><a href="#support">Support</a></li>
-                        <li><a href="#about-us">About Us</a></li>
-                        <li><a href="javascript:void(0)" onclick="openDataProtectionModal()">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Services -->
-                <div class="col-lg-3 col-md-6">
-                    <h3 style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-bottom: 25px; border-bottom: 2px solid #F26522; display: inline-block; padding-bottom: 5px;">Our Services</h3>
-                    <ul class="footer-links list-unstyled">
-                        <li><a href="#">Web Development</a></li>
-                        <li><a href="#">Mobile Apps</a></li>
-                        <li><a href="#">BVN & NIN Services</a></li>
-                        <li><a href="#">Digital Marketing</a></li>
-                        <li><a href="#">Verifications</a></li>
-                        <li><a href="#">Bill payments</a></li>
-                        <li><a href="#">API services</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Contact -->
-                <div class="col-lg-3 col-md-6">
-                    <h3 style="color: #fff; font-size: 1.2rem; font-weight: 600; margin-bottom: 25px; border-bottom: 2px solid #F26522; display: inline-block; padding-bottom: 5px;">Contact Us</h3>
-                    <ul class="footer-contact list-unstyled">
-                        <li style="margin-bottom: 15px; display: flex;">
-                            <i class="fas fa-map-marker-alt" style="color: #F26522; margin-top: 5px; margin-right: 10px;"></i>
-                            <span style="color: rgba(255,255,255,0.8);">NO983 BABANTUDE ADELEKE STREET APAPA LAGOS</span>
-                        </li>
-                        <li style="margin-bottom: 15px; display: flex;">
-                            <i class="fas fa-phone" style="color: #F26522; margin-top: 5px; margin-right: 10px;"></i>
-                            <span style="color: rgba(255,255,255,0.8);">08064333983</span>
-                        </li>
-                        <li style="margin-bottom: 15px; display: flex;">
-                            <i class="fas fa-envelope" style="color: #F26522; margin-top: 5px; margin-right: 10px;"></i>
-                            <span style="color: rgba(255,255,255,0.8);">arewasmart001@gmail.com</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 40px 0;">
-            
-            <div class="footer-bottom text-center">
-                <p style="color: rgba(255,255,255,0.6); margin: 0;">&copy; 2026 Arewa Smart Idea. All rights reserved. | Designed with <i class="fas fa-heart" style="color: #F26522;"></i> by Arewa Smart Team.</p>
-            </div>
-        </div>
-
-        <style>
-            .footer-links li {
-                margin-bottom: 12px;
-            }
-            .footer-links a {
-                color: rgba(255,255,255,0.7);
-                text-decoration: none;
-                transition: all 0.3s ease;
-                display: inline-block;
-            }
-            .footer-links a:hover {
-                color: #F26522;
-                transform: translateX(5px);
-            }
-            .footer-social {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                background: rgba(255,255,255,0.1);
-                color: #fff;
-                border-radius: 50%;
-                margin-right: 10px;
-                text-decoration: none;
-                transition: all 0.3s ease;
-            }
-            .footer-social:hover {
-                background: #F26522;
-                color: #fff;
-                transform: translateY(-3px);
-            }
-        </style>
-    </footer>
-
-    <!-- Privacy Banner (Footer) -->
-    <div class="privacy-banner" id="privacyBanner">
-        <div class="banner-content">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-shield-alt privacy-icon"></i>
-                <div class="privacy-text">
-                    <h5>Your Privacy Matters</h5>
-                    <p>We value your privacy and are committed to protecting your personal data in compliance with the Data Protection Regulation (NDPR). We collect data to provide verification services.</p>
-                </div>
-            </div>
-            <div class="banner-actions">
-                <a href="javascript:void(0)" class="link-primary" onclick="openDataProtectionModal()">Read Full Policy</a>
-                <button type="button" class="btn btn-outline-secondary" onclick="rejectPrivacy()">Reject</button>
-                <button type="button" class="btn btn-primary" onclick="acceptPrivacyPolicy()">Accept & Continue</button>
-            </div>
-        </div>
-    </div>
+        <!-- Contact Us -->
+       @include('pages.welcome.support')
 
 
-    <!-- Data Protection Modal -->
-    <div class="modal fade data-protection-modal" id="dataProtectionModal" tabindex="-1" aria-labelledby="dataProtectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dataProtectionModalLabel"><i class="fas fa-shield-alt me-2"></i> Data Protection & Privacy Policy</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center mb-4">
-                        <img src="{{ asset('assets/img/logo/new-logo.png') }}" alt="Logo" style="height: 60px;">
-                        <h4 class="mt-3 text-dark">Arewa Smart Idea Data Privacy Commitment</h4>
-                    </div>
-
-                    <p class="lead text-muted mb-4">
-                        At Arewa Smart Idea, we are committed to protecting your personal data in compliance with the 
-                        <strong>Nigeria Data Protection Regulation (NDPR) 2019</strong> and other applicable laws.
-                    </p>
-
-                    <div class="policy-section">
-                        <h5>1. Introduction</h5>
-                        <p>This Privacy Policy explains how Arewa Smart Idea collects, uses, and protects your personal information when you use our digital solutions, including our website, mobile applications, and NIN/BVN services.</p>
-                    </div>
-
-                    <div class="policy-section">
-                        <h5>2. Consent</h5>
-                        <p>By accessing our platforms or using our services, you consent to the collection and use of your personal data as described in this policy. You have the right to withdraw your consent at any time.</p>
-                    </div>
-
-                    <div class="policy-section">
-                        <h5>3. Information We Collect</h5>
-                        <p>We may collect the following types of information to provide you with better services:</p>
-                        <ul>
-                            <li><strong>Personal Identification:</strong> Name, Email address, Phone number, NIN, BVN (for verification services).</li>
-                            <li><strong>Business Details:</strong> Business name, address, and nature of business.</li>
-                            <li><strong>Technical Data:</strong> IP address, browser type, and device information.</li>
-                        </ul>
-                    </div>
-
-                    <div class="policy-section">
-                        <h5>4. Purpose of Collection</h5>
-                        <p>Your data is collected for the following lawful purposes:</p>
-                        <ul>
-                            <li>To provide and manage our services (e.g., identity verification, account management).</li>
-                            <li>To communicate with you regarding updates, support, and promotional offers.</li>
-                            <li>To comply with legal obligations and regulatory requirements.</li>
-                            <li>To improve our platforms and user experience.</li>
-                        </ul>
-                    </div>
-
-                    <div class="policy-section">
-                        <h5>5. Data Security</h5>
-                        <p>We implement robust technical and organizational measures to secure your personal data against unauthorized access, loss, or alteration. We use encryption, secure servers, and strict access controls.</p>
-                    </div>
-
-                    <div class="policy-section">
-                        <h5>6. Your Rights (NDPR)</h5>
-                        <p>Subject to the NDPR, you have the right to:</p>
-                        <ul>
-                            <li>Request access to your personal data held by us.</li>
-                            <li>Request correction of inaccurate or incomplete data.</li>
-                            <li>Request deletion of your data (Right to be Forgotten).</li>
-                            <li>Object to the processing of your data for marketing purposes.</li>
-                        </ul>
-                    </div>
-
-                     <div class="policy-section">
-                        <h5>7. Contact Us</h5>
-                        <p>If you have any questions about this policy or wish to exercise your rights, please contact our Data Protection Officer at:</p>
-                        <p><strong>Email:</strong> privacy@arewasmart.com.ng<br>
-                        <strong>Phone:</strong> 08064333983<br>
-                        <strong>Address:</strong> NO983 Babantude Adelke Street Apapa Lagos.</p>
-                    </div>
-
-                    <div class="alert alert-warning mt-4 text-center">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        By clicking "I Agree & Continue", you acknowledge that you have read and understood this Privacy Policy and agree to our Terms of Service.
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a href="{{ route('register') }}" class="btn btn-primary px-5 py-2 fw-bold" onclick="acceptPrivacyPolicy()">
-                        I Agree & Continue <i class="fas fa-arrow-right ms-2"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+       <!-- Testimonials -->
+       @include('pages.welcome.testimonials')
 
 
-    <script>
-        // Mobile menu toggle - IMPROVED
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenu = document.querySelector('.mobile-menu');
-            const navMenu = document.querySelector('nav ul');
-            
-            if (mobileMenu && navMenu) {
-                mobileMenu.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    navMenu.classList.toggle('active');
-                    
-                    // Toggle menu icon
-                    const icon = this.querySelector('i');
-                    if (icon.classList.contains('fa-bars')) {
-                        icon.classList.remove('fa-bars');
-                        icon.classList.add('fa-times');
-                    } else {
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    }
-                });
-                
-                // Close menu when clicking on a link
-                document.querySelectorAll('nav ul li a').forEach(link => {
-                    link.addEventListener('click', function() {
-                        navMenu.classList.remove('active');
-                        const icon = mobileMenu.querySelector('i');
-                        icon.classList.remove('fa-times');
-                        icon.classList.add('fa-bars');
-                    });
-                });
-                
-                // Close menu when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!navMenu.contains(event.target) && !mobileMenu.contains(event.target)) {
-                        navMenu.classList.remove('active');
-                        const icon = mobileMenu.querySelector('i');
-                        if (icon) {
-                            icon.classList.remove('fa-times');
-                            icon.classList.add('fa-bars');
-                        }
-                    }
-                });
-            }
-        });
-        
-        // Add scroll effect to header
-        window.addEventListener('scroll', function() {
-            const header = document.querySelector('header');
-            if (window.scrollY > 100) {
-                header.style.boxShadow = '0 5px 20px rgba(0,0,0,0.1)';
-            } else {
-                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-            }
-        });
-
-        // Data Protection Logic
-        function openDataProtectionModal() {
-            var myModal = new bootstrap.Modal(document.getElementById('dataProtectionModal'), {
-                keyboard: false
-            });
-            myModal.show();
-        }
-
-        function acceptPrivacyPolicy() {
-            localStorage.setItem('arewa_privacy_accepted', 'true');
-            document.getElementById('privacyBanner').style.display = 'none';
-            var modalEl = document.getElementById('dataProtectionModal');
-            var modal = bootstrap.Modal.getInstance(modalEl);
-            if(modal) modal.hide();
-        }
-        
-        function rejectPrivacy() {
-             document.getElementById('privacyBanner').style.display = 'none';
-        }
-
-        // Auto-show banner for first time visitors
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!localStorage.getItem('arewa_privacy_accepted')) {
-                document.getElementById('privacyBanner').style.display = 'block';
-            }
-            
-            // Ensure install button is visible by default
-            document.querySelectorAll('.install-app-btn').forEach(btn => {
-                btn.style.display = 'inline-block';
-            });
-        });
-    </script>
-    <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-    <script> AOS.init({ duration: 1000, once: true }) </script>
-
-    <script>
-        // PWA Implementation for Landing Page
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker registered', reg))
-                    .catch(err => console.log('Service Worker registration failed', err));
-            });
-        }
-
-        let deferredPrompt;
-        const installBtns = document.querySelectorAll('.install-app-btn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Make sure buttons are visible
-            installBtns.forEach(btn => {
-                btn.style.display = 'inline-block';
-                btn.style.opacity = '1';
-                btn.style.visibility = 'visible';
-            });
-
-            const lastPrompt = localStorage.getItem('pwa_install_prompt_last');
-            const now = new Date().getTime();
-            const twentyFourHours = 24 * 60 * 60 * 1000;
-
-            if (!lastPrompt || (now - lastPrompt > twentyFourHours)) {
-                setTimeout(() => {
-                    Swal.fire({
-                        title: 'Install Arewa Smart?',
-                        text: 'Install our application on your device for a better experience and quick access!',
-                        icon: 'info',
-                        showCancelButton: true,
-                        confirmButtonColor: '#F26522',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, Install now',
-                        cancelButtonText: 'Maybe later'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            triggerInstall();
-                        }
-                        localStorage.setItem('pwa_install_prompt_last', now);
-                    });
-                }, 3000);
-            }
-        });
-
-        installBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (deferredPrompt) {
-                    triggerInstall();
-                } else {
-                    Swal.fire({
-                        title: 'Installation Ready?',
-                        text: 'To install this app, please use Google Chrome or Microsoft Edge. If you are already using them, wait a few seconds or ensure your connection is stable.',
-                        icon: 'info',
-                        confirmButtonColor: '#F26522'
-                    });
-                }
-            });
-        });
-
-        function triggerInstall() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            }
-        }
-
-        window.addEventListener('appinstalled', (evt) => {
-            Swal.fire({
-                title: 'Installed!',
-                text: 'Application has been successfully installed.',
-                icon: 'success',
-                timer: 3000,
-                showConfirmButton: false
-            });
-        });
-    </script>
+       <!-- footer -->
+       @include('pages.welcome.footer')
 
 
-</body>
+        <!-- Custom Scripts -->
+        <script src="{{ asset('assets/js/welcome.js') }}"></script>
+    </body>
 </html>

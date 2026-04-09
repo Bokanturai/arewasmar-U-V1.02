@@ -1,5 +1,5 @@
 <x-app-layout>
-    <title>Arewa Smart - Transfer Receipt</title>
+    <title>Arewa Smart - Redemption Receipt</title>
 
     @push('styles')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -9,7 +9,7 @@
             --receipt-bg: #ffffff;
             --receipt-text: #2d3436;
             --receipt-muted: #636e72;
-            --receipt-accent: #0984e3;
+            --receipt-accent: #F26522; /* Matching your brand orange */
             --receipt-success: #00b894;
             --receipt-width: 380px;
         }
@@ -209,9 +209,9 @@
         }
 
         .btn-primary-custom:hover {
-            background: #0873c4;
+            background: #e45210;
             transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(9, 132, 227, 0.2);
+            box-shadow: 0 4px 10px rgba(242, 101, 34, 0.2);
         }
 
         @keyframes slideUp {
@@ -248,13 +248,6 @@
     </style>
     @endpush
 
-    @php
-        $ref = $transaction->transaction_ref ?? 'N/A';
-        $displayDate = $date->format('d/m/Y • h:i A');
-        $netAmount = $transaction->net_amount ?? $amount;
-        $fee = $transaction->fee ?? 0;
-    @endphp
-
     <div class="receipt-container">
         <div class="receipt-wrapper">
             
@@ -269,41 +262,44 @@
                     <div class="success-checkmark">
                         <i class="bi bi-check-lg"></i>
                     </div>
-                    <span class="status-badge">Transfer Successful</span>
+                    <span class="status-badge">Redemption Successful</span>
                     <h5 class="mb-0 fw-bold">Arewa Smart Idea</h5>
-                    <p class="text-muted extra-small mb-0">Ref: #{{ $ref }}</p>
+                    <p class="text-muted extra-small mb-0">Ref: #{{ $transaction_ref }}</p>
                 </div>
 
                 <div class="receipt-body">
                     <div class="info-row">
                         <span class="info-label">Date</span>
-                        <span class="info-value">{{ $displayDate }}</span>
+                        <span class="info-value">{{ now()->format('d/m/Y • h:i A') }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Sender</span>
-                        <span class="info-value">{{ $sender->first_name }} {{ $sender->last_name }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Receiver</span>
-                        <span class="info-value">{{ $receiver->first_name }} {{ $receiver->last_name }}</span>
+                        <span class="info-label">Customer</span>
+                        <span class="info-value">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Service</span>
-                        <span class="info-value">Wallet Transfer (P2P)</span>
+                        <span class="info-value">Gift Card Redemption</span>
                     </div>
-                    @if($transaction->description)
                     <div class="info-row">
-                        <span class="info-label">Remark</span>
-                        <span class="info-value">{{ $transaction->description }}</span>
+                        <span class="info-label">Card Type</span>
+                        <span class="info-value">{{ $card_title }}</span>
                     </div>
-                    @endif
+                    <div class="info-row">
+                        <span class="info-label">Original Value</span>
+                        <span class="info-value">₦{{ number_format($card_amount, 2) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Service Fee</span>
+                        <span class="info-value text-danger">-₦{{ number_format($fee, 2) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">New Balance</span>
+                        <span class="info-value">₦{{ number_format($new_balance, 2) }}</span>
+                    </div>
 
                     <div class="amount-section">
-                        <span class="amount-label">Total Amount Debited</span>
-                        <span class="amount-value">₦{{ number_format($netAmount, 2) }}</span>
-                        @if($fee > 0)
-                            <span class="text-muted extra-small" style="font-size: 0.75rem;">(Incl. ₦{{ number_format($fee, 2) }} fee)</span>
-                        @endif
+                        <span class="amount-label">Net Amount Credited</span>
+                        <span class="amount-value">₦{{ number_format($credited, 2) }}</span>
                     </div>
                 </div>
 
@@ -317,8 +313,8 @@
                         <button onclick="shareAsPDF()" class="btn-receipt btn-download">
                             <i class="bi bi-share"></i> Share
                         </button>
-                        <a href="{{ route('transfer.index') }}" class="btn-receipt btn-download">
-                            <i class="bi bi-arrow-repeat"></i> New Transfer
+                        <a href="{{ route('gift-card.redeem') }}" class="btn-receipt btn-download">
+                            <i class="bi bi-arrow-repeat"></i> New Redemption
                         </a>
                         <a href="{{ route('dashboard') }}" class="btn-receipt btn-primary-custom">
                             <i class="bi bi-house-door"></i> Home
@@ -337,11 +333,13 @@
     <script>
         // AI Voice Notification on Load
         window.addEventListener('load', () => {
-            const message = "Your transfer is successful and delivered";
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            window.speechSynthesis.speak(utterance);
+            if ('speechSynthesis' in window) {
+                const message = "Your gift card redemption was successful. ₦{{ number_format($credited, 2) }} has been added to your wallet.";
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
         });
 
         // Share as PDF functionality
@@ -370,15 +368,15 @@
                 
                 pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2);
                 const pdfBlob = pdf.output('blob');
-                const fileName = `ArewaSmart_Transfer_{{ $ref }}.pdf`;
+                const fileName = `ArewaSmart_Redemption_{{ $transaction_ref }}.pdf`;
                 const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
                 // Check if sharing is supported
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         files: [file],
-                        title: 'Transfer Receipt',
-                        text: 'Receipt for my transfer on Arewa Smart Idea.'
+                        title: 'Gift Card Redemption Receipt',
+                        text: 'Receipt for my Gift Card redemption on Arewa Smart Idea.'
                     });
                 } else {
                     // Fallback to download
@@ -397,4 +395,3 @@
     </script>
     @endpush
 </x-app-layout>
-
