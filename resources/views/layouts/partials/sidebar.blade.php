@@ -74,7 +74,7 @@
                 <!-- Transfer Payment -->
                 <li class="submenu">
                     <a href="javascript:void(0);"
-                       class="{{ request()->routeIs('transfer.index') ? 'active subdrop' : '' }} position-relative">
+                       class="{{ request()->routeIs('transfer.index', 'withdraw.index') ? 'active subdrop' : '' }} position-relative">
                         <i class="ti ti-arrows-left-right"></i>
                         <span>Transfer</span>
                         <span class="badge rounded-pill bg-danger text-white border border-white ms-2" style="font-size: 8px; padding: 2px 5px; animation: pulse-red-sidebar 2s infinite;">
@@ -83,11 +83,17 @@
                         <span class="menu-arrow"></span>
                     </a>
 
-                    <ul style="{{ request()->routeIs('transfer.index') ? 'display: block;' : 'display: none;' }}">
+                    <ul style="{{ request()->routeIs('transfer.index', 'withdraw.index') ? 'display: block;' : 'display: none;' }}">
                         <li>
                             <a href="{{ route('transfer.index') }}"
                                class="{{ request()->routeIs('transfer.index') ? 'active' : '' }}">
-                                Transfer to Smart User
+                                Transfer P2P
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('withdraw.index') }}"
+                               class="{{ request()->routeIs('withdraw.index') ? 'active' : '' }}">
+                                Withdraw to Bank
                             </a>
                         </li>
                     </ul>

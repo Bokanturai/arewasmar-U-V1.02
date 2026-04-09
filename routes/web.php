@@ -333,6 +333,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/thankyou', [\App\Http\Controllers\Action\GiftCardController::class, 'thankYou3'])->name('thankyou3');
     });
 
+    // Wallet Withdrawal Routes
+    Route::prefix('withdraw')->name('withdraw.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Action\WithdrawController::class, 'index'])->name('index');
+        Route::get('/sync-banks', [\App\Http\Controllers\Action\WithdrawController::class, 'syncBanks'])->name('syncBanks');
+        Route::post('/verify-account', [\App\Http\Controllers\Action\WithdrawController::class, 'verifyAccount'])->name('verifyAccount');
+        Route::post('/process', [\App\Http\Controllers\Action\WithdrawController::class, 'processWithdrawal'])->name('process');
+    });
+
 });
 
 

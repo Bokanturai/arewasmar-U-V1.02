@@ -285,11 +285,11 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Receiver</span>
-                        <span class="info-value">{{ $receiver->first_name }} {{ $receiver->last_name }}</span>
+                        <span class="info-value">{{ $receiver_name ?? ($receiver->first_name . ' ' . $receiver->last_name) }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Service</span>
-                        <span class="info-value">Wallet Transfer (P2P)</span>
+                        <span class="info-value">{{ $service_name ?? 'Wallet Transfer (P2P)' }}</span>
                     </div>
                     @if($transaction->description)
                     <div class="info-row">
@@ -337,7 +337,7 @@
     <script>
         // AI Voice Notification on Load
         window.addEventListener('load', () => {
-            const message = "Your transfer is successful and delivered";
+            const message = "Your {{ strtolower($service_name ?? 'transfer') }} is successful and delivered";
             const utterance = new SpeechSynthesisUtterance(message);
             utterance.rate = 1.0;
             utterance.pitch = 1.0;

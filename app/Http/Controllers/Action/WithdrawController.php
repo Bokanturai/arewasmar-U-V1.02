@@ -49,7 +49,7 @@ class WithdrawController extends Controller
             ['field_code' => 'WDL_002', 'description' => 'Minimum transaction volume for eligibility', 'base_price' => 2000000, 'is_active' => true]
         );
 
-        $banks = Bank::where('is_active', true)->orderBy('bankName')->get();
+        $banks = Bank::where('is_active', true)->orderBy('bank_name')->get();
 
         // Calculate total transaction volume
         $totalVolume = Transaction::where('user_id', $user->id)
@@ -68,19 +68,19 @@ class WithdrawController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($report) use ($banks) {
-                $bank = $banks->firstWhere('bankCode', $report->bank_code);
+                $bank = $banks->firstWhere('bank_code', $report->bank_code);
                 return [
                     'bank_code' => $report->bank_code,
                     'account_no' => $report->account_number,
                     'account_name' => $report->account_name,
                     'bank_name' => $report->bank_name ?? 'Bank',
-                    'bank_url' => $bank->bankUrl ?? null
+                    'bank_url' => $bank->bank_url ?? null
                 ];
             })
             ->filter(fn($item) => !empty($item['bank_code']) && !empty($item['account_no']))
             ->unique(fn($item) => $item['bank_code'] . $item['account_no'])
             ->values()
-            ->take(5);
+            ->take(30);
 
         return view('wallet.withdraw', compact('banks', 'totalVolume', 'user', 'recentRecipients', 'eligibilityAmount'));
     }
@@ -90,6 +90,10 @@ class WithdrawController extends Controller
      */
     public function syncBanks()
     {
+        if (Auth::user()->role !== 'super_admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $response = $this->palmPay->queryBankList();
 
         if (isset($response['respCode']) && $response['respCode'] === '00000000') {
@@ -97,11 +101,11 @@ class WithdrawController extends Controller
 
             foreach ($banksData as $bank) {
                 Bank::updateOrCreate(
-                    ['bankCode' => $bank['bankCode']],
+                    ['bank_code' => $bank['bankCode']],
                     [
-                        'bankName' => $bank['bankName'],
-                        'bankUrl' => $bank['bankUrl'] ?? null,
-                        'bgUrl' => $bank['bgUrl'] ?? null,
+                        'bank_name' => $bank['bankName'],
+                        'bank_url' => $bank['bankUrl'] ?? null,
+                        'bg_url' => $bank['bgUrl'] ?? null,
                         'is_active' => true,
                     ]
                 );
@@ -150,7 +154,7 @@ class WithdrawController extends Controller
     public function processWithdrawal(Request $request)
     {
         $request->validate([
-            'bank_code' => 'required|exists:banks,bankCode',
+            'bank_code' => 'required|exists:banks,bank_code',
             'account_no' => 'required|digits:10',
             'account_name' => 'required|string',
             'amount' => 'required|numeric|min:100', // Minimum 100 NGN
@@ -188,7 +192,7 @@ class WithdrawController extends Controller
                 ->first();
 
             if ($recentDuplicate) {
-                $bankName = Bank::where('bankCode', $request->bank_code)->value('bankName') ?? 'Bank';
+                $bankName = Bank::where('bank_code', $request->bank_code)->value('bank_name') ?? 'Bank';
                 return view('thankyou2', [
                     'transaction' => $recentDuplicate,
                     'sender' => $user,
@@ -306,7 +310,7 @@ class WithdrawController extends Controller
                 ]);
 
                 // 7. Create Report Record (Pending)
-                $bankName = Bank::where('bankCode', $request->bank_code)->value('bankName') ?? 'Bank';
+                $bankName = Bank::where('bank_code', $request->bank_code)->value('bank_name') ?? 'Bank';
 
                 $report = \App\Models\Report::create([
                     'user_id' => $user->id,
