@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Http\Requests\Action\BuyAirtimeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -30,41 +31,41 @@ class AirtimeController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
-            return redirect()->route('login')->with('error', 'Please log in to access this page.');
-        }
-
+        // Wallet is already ensured via middleware or should be checked here
         $wallet = Wallet::firstOrCreate(
             ['user_id' => $user->id],
             ['balance' => 0.00, 'status' => 'active']
         );
 
-        // Fetch recent airtime recipients from reports
+        // Fetch unique recent airtime recipients
         $recentRecipients = \App\Models\Report::where('user_id', $user->id)
             ->where('type', 'airtime')
             ->where('status', 'successful')
             ->orderBy('created_at', 'desc')
+            ->limit(50) // Get a larger set first to filter unique phone numbers
             ->get()
+            ->unique('phone_number')
+            ->take(15)
             ->map(function ($report) {
                 $network = strtolower($report->network);
-                $img = 'default.png';
-                if (str_contains($network, 'mtn')) $img = 'mtn.jpg';
-                elseif (str_contains($network, 'airtel')) $img = 'Airtel.png';
-                elseif (str_contains($network, 'glo')) $img = 'glo.jpg';
-                elseif (str_contains($network, 'etisalat') || str_contains($network, '9mobile')) $img = '9Mobile.jpg';
+                $img = match (true) {
+                    str_contains($network, 'mtn')      => 'mtn.jpg',
+                    str_contains($network, 'airtel')   => 'Airtel.png',
+                    str_contains($network, 'glo')      => 'glo.jpg',
+                    str_contains($network, 'etisalat'),
+                    str_contains($network, '9mobile')  => '9Mobile.jpg',
+                    default                            => 'default.png',
+                };
 
                 return [
-                    'account_no' => $report->phone_number,
+                    'account_no'   => $report->phone_number,
                     'account_name' => $report->phone_number,
-                    'bank_name' => strtoupper($report->network),
-                    'bank_code' => $report->network,
-                    'bank_url' => asset('assets/img/apps/' . $img)
+                    'bank_name'    => strtoupper($report->network),
+                    'bank_code'    => $report->network,
+                    'bank_url'     => asset('assets/img/apps/' . $img)
                 ];
             })
-            ->filter(fn($item) => !empty($item['account_no']))
-            ->unique('account_no')
-            ->values()
-            ->take(10);
+            ->values();
 
         return view('utilities.index', [
             'user'             => $user,
@@ -79,66 +80,60 @@ class AirtimeController extends Controller
     /**
      * Handle Airtime Purchase
      */
-    public function buyAirtime(Request $request)
+    public function buyAirtime(BuyAirtimeRequest $request)
     {
-        $request->validate([
-            'network'   => ['required', 'string', 'in:mtn,airtel,glo,etisalat'],
-            'mobileno'  => 'required|numeric|digits:11',
-            'amount'    => 'required|numeric|min:50|max:10000',
-        ]);
-
-        $user   = Auth::user();
-        $networkKey = strtolower($request->network); // mtn, airtel, etc.
-        $mobile  = $request->mobileno;
-        $amount  = $request->amount;
-        $requestId = RequestIdHelper::generateRequestId();
+        $user       = Auth::user();
+        $networkKey = strtolower($request->network);
+        $mobile     = $request->mobileno;
+        $amount     = $request->amount;
+        $requestId  = RequestIdHelper::generateRequestId();
         
         // 0. Preliminary Status Checks
         if ($user->status !== 'active') {
              return redirect()->back()->with('error', "Your account is currently {$user->status}. Access denied.");
         }
 
-        // 1. Find the Airtime Service
+        // 1. Idempotency Check (Prevent duplicate requests within 60 seconds)
+        $recentTransaction = \App\Models\Report::where('user_id', $user->id)
+            ->where('phone_number', $mobile)
+            ->where('amount', $amount)
+            ->where('type', 'airtime')
+            ->where('created_at', '>=', now()->subMinute())
+            ->first();
+
+        if ($recentTransaction) {
+            return redirect()->back()->with('error', 'A similar transaction was recently processed. Please wait a moment before trying again.');
+        }
+
+        // 2. Find the Airtime Service & Field
         $service = Service::where('name', 'Airtime')->first();
         if (!$service) {
-            // Fallback if 'Airtime' service doesn't exist, maybe try 'Utility' or just proceed with 0 discount
-            // For now, let's assume it exists or create a fallback
              $service = Service::firstOrCreate(['name' => 'Airtime'], ['status' => 'active']);
         }
 
-        // 2. Find the specific Network Field (e.g., MTN)
-        // We assume ServiceField stores the network name in 'field_name' or 'field_code'
+        // Exact match preferred for security over LIKE
         $serviceField = \App\Models\ServiceField::where('service_id', $service->id)
             ->where(function($q) use ($networkKey) {
-                $q->where('field_name', 'LIKE', "%{$networkKey}%")
-                  ->orWhere('field_code', 'LIKE', "%{$networkKey}%");
-            })->first();
+                $q->where('field_code', $networkKey)
+                  ->orWhere('field_name', 'LIKE', "%{$networkKey}%");
+            })->orderByRaw("field_code = ? DESC", [$networkKey]) // Prioritize exact code match
+            ->first();
 
         // 3. Calculate Discount
         $discountPercentage = 0;
         if ($serviceField) {
-            // Check for specific price/discount for this user type
-            // Assuming 'user_type' column exists in users table, or default to 'agent'/'user'
             $userType = $user->user_type ?? 'personal'; 
-            
-            // Try to get price from ServicePrice
             $servicePrice = \App\Models\ServicePrice::where('service_fields_id', $serviceField->id)
                 ->where('user_type', $userType)
                 ->first();
 
-            if ($servicePrice) {
-                $discountPercentage = $servicePrice->price; // e.g., 10 means 10%
-            } else {
-                $discountPercentage = $serviceField->base_price ?? 0; 
-            }
+            $discountPercentage = $servicePrice ? $servicePrice->price : ($serviceField->base_price ?? 0);
         }
 
-        // If discount is 10, it means 10% off.
-        // Payable = Amount - (Amount * 10 / 100)
         $discountAmount = ($amount * $discountPercentage) / 100;
         $payableAmount = $amount - $discountAmount;
 
-        // 4. Check Wallet Balance
+        // 4. Check Wallet Balance & Status
         $wallet = Wallet::where('user_id', $user->id)->first();
         if (!$wallet || $wallet->balance < $payableAmount) {
             return redirect()->back()->with('error', 'Insufficient wallet balance! You need ₦' . number_format($payableAmount, 2));
@@ -148,46 +143,51 @@ class AirtimeController extends Controller
             return redirect()->back()->with('error', 'Your wallet is not active. Please contact support.');
         }
 
+        // 5. Initialize Records (Mark as Processing)
         DB::beginTransaction();
-
         try {
-            // 5. Create Preliminary Records & Charge Wallet
             $oldBalance = $wallet->balance;
             $wallet->decrement('balance', $payableAmount);
             $newBalance = $wallet->balance;
 
-            // Create Transaction Record (Pending)
             $transaction = Transaction::create([
                 'transaction_ref' => $requestId,
                 'user_id'         => $user->id,
                 'amount'          => $payableAmount,
                 'description'     => "Airtime purchase of ₦{$amount} for {$mobile} ({$networkKey})",
                 'type'            => 'debit',
-                'status'          => 'pending',
+                'status'          => 'processing', // Use processing state
                 'performed_by'    => $user->first_name . ' ' . $user->last_name,
                 'approved_by'     => $user->id,
             ]);
 
-            // Create Report Record (Pending)
             $report = \App\Models\Report::create([
                 'user_id'      => $user->id,
                 'phone_number' => $mobile,
                 'network'      => $networkKey,
                 'ref'          => $requestId,
                 'amount'       => $amount,
-                'status'       => 'pending',
+                'status'       => 'processing', // Use processing state
                 'type'         => 'airtime',
-                'description'  => "Airtime purchase for {$mobile}",
+                'description'  => "Processing: Airtime purchase for {$mobile}",
                 'old_balance'  => $oldBalance,
                 'new_balance'  => $newBalance,
                 'service_id'   => $serviceField ? $serviceField->id : null,
             ]);
 
-            // 6. Call Airtime API
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Airtime Initialization Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to initialize transaction. Please try again.');
+        }
+
+        // 6. Call Airtime API (OUTSIDE the DB Transaction)
+        try {
             $response = Http::withHeaders([
                 'api-key'    => env('API_KEY'),
                 'secret-key' => env('SECRET_KEY'),
-            ])->post(env('MAKE_PAYMENT'), [
+            ])->timeout(30)->post(env('MAKE_PAYMENT'), [
                 'request_id' => $requestId,
                 'serviceID'  => $networkKey,
                 'amount'     => $amount,
@@ -207,21 +207,16 @@ class AirtimeController extends Controller
             }
 
             if ($isSuccessful) {
-                // Finalize Records
                 $transaction->update([
-                    'status'   => 'completed',
+                    'status'   => 'successful', // Use standardized 'successful'
                     'metadata' => json_encode([
                         'phone'        => $mobile,
                         'network'      => $networkKey,
-                        'original_amt' => $amount,
                         'discount'     => $discountAmount,
                         'api_response' => $data,
                     ]),
                 ]);
-
-                $report->update(['status' => 'successful']);
-
-                DB::commit();
+                $report->update(['status' => 'successful', 'description' => "Successful: Airtime purchase for {$mobile}"]);
 
                 return redirect()->route('thankyou')->with([
                     'success' => 'Airtime purchase successful!',
@@ -234,21 +229,31 @@ class AirtimeController extends Controller
             }
 
             // API Failed - REFUND
-            $wallet->increment('balance', $payableAmount);
-            $transaction->update(['status' => 'failed']);
-            $report->update([
-                'status'      => 'failed',
-                'description' => "Failed: " . ($data['message'] ?? 'Unknown error'),
-            ]);
+            DB::transaction(function () use ($wallet, $payableAmount, $transaction, $report, $data) {
+                $wallet->increment('balance', $payableAmount);
+                $transaction->update(['status' => 'failed']);
+                $report->update([
+                    'status'      => 'failed',
+                    'description' => "Failed: " . ($data['message'] ?? 'API Provider Error'),
+                ]);
+            });
 
-            DB::commit();
-            Log::error('Airtime API Response Error', ['response' => $data]);
+            Log::error('Airtime API Error', ['response' => $data, 'ref' => $requestId]);
             return redirect()->back()->with('error', 'Airtime purchase failed. ' . ($data['message'] ?? 'Unknown error'));
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Airtime Purchase Exception: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong. Please try again later.');
+            // Unexpected Error (e.g. timeout) - Mark as failed and REFUND
+            DB::transaction(function () use ($wallet, $payableAmount, $transaction, $report, $e) {
+                $wallet->increment('balance', $payableAmount);
+                $transaction->update(['status' => 'failed']);
+                $report->update([
+                    'status'      => 'failed',
+                    'description' => "Error: " . $e->getMessage(),
+                ]);
+            });
+
+            Log::error('Airtime API Exception: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Connection error. Your wallet has been refunded.');
         }
     }
 }

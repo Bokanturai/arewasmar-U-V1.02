@@ -36,6 +36,22 @@ class Report extends Model
         'verified_at' => 'datetime'
     ];
 
+    /**
+     * Get the standardized status name.
+     */
+    public function getNormalizedStatusAttribute()
+    {
+        return \App\Helpers\StatusHelper::normalize($this->status);
+    }
+
+    /**
+     * Get the Bootstrap color for the status.
+     */
+    public function getStatusColorAttribute()
+    {
+        return \App\Helpers\StatusHelper::color($this->status);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

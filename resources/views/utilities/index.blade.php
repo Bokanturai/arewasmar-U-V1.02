@@ -18,9 +18,51 @@
             border-color: #df6808ff;
             background-color: #e7f1ff;
         }
+        .network-option {
+            position: relative;
+        }
+        .network-option .check-mark {
+            display: none;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #fff;
+            border-radius: 50%;
+            z-index: 5;
+            line-height: 1;
+        }
+        .network-option.active .check-mark {
+            display: block;
+        }
         .small-note {
             font-size: 0.8rem;
             color: #6c757d;
+        }
+
+        /* Recent Recipients Scrollable Container */
+        #recentRecipientsBody {
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #df6808ff #f8f9fa;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-track {
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-thumb {
+            background-color: #df6808ff;
+            border-radius: 10px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-thumb:hover {
+            background-color: #c55a06ff;
         }
     </style>
     @endpush
@@ -120,6 +162,7 @@
                                                     <div class="network-option d-flex flex-column align-items-center p-2 rounded-4 border border-light shadow-sm"
                                                          data-network="{{ $key }}"
                                                          style="cursor: pointer; transition: all 0.2s;">
+                                                        <i class="bi bi-check-circle-fill text-primary check-mark"></i>
                                                         <img src="{{ asset('assets/img/apps/' . $network['img']) }}"
                                                              alt="{{ $network['name'] }}"
                                                              class="rounded-circle mb-1 shadow-sm"
@@ -138,7 +181,12 @@
                                     <div class="mb-3 mb-md-4">
                                         <label for="amount" class="form-label d-flex justify-content-between align-items-center fw-semibold text-dark small mb-2">
                                             <span>Amount</span>
-                                            <small class="text-muted fw-normal">Bal: <strong class="text-success">₦{{ number_format($wallet->balance ?? 0, 2) }}</strong></small>
+                                            <small class="text-muted fw-normal d-flex align-items-center">
+                                                <span>Bal: </span>
+                                                <strong id="walletBalance" class="text-success ms-1 d-none">₦{{ number_format($wallet->balance ?? 0, 2) }}</strong>
+                                                <strong id="hiddenBalance" class="text-success ms-1">₦ * * * *</strong>
+                                                <i id="toggleBalance" class="bi bi-eye ms-2 text-primary" style="cursor: pointer; font-size: 0.9rem;"></i>
+                                            </small>
                                         </label>
                                         <div class="input-group shadow-sm">
                                             <span class="input-group-text bg-light border-end-0 fw-bold text-secondary">₦</span>
@@ -271,6 +319,24 @@
             const phoneInput          = document.getElementById('mobileno');
             const networkResultDiv    = document.getElementById('networkResult');
             const buyButton           = document.getElementById('buy-airtime');
+            const toggleBalance       = document.getElementById('toggleBalance');
+            const walletBalance       = document.getElementById('walletBalance');
+            const hiddenBalance       = document.getElementById('hiddenBalance');
+
+            // --- Toggle Balance Visibility ---
+            if (toggleBalance) {
+                toggleBalance.addEventListener('click', function() {
+                    if (walletBalance.classList.contains('d-none')) {
+                        walletBalance.classList.remove('d-none');
+                        hiddenBalance.classList.add('d-none');
+                        this.classList.replace('bi-eye', 'bi-eye-slash');
+                    } else {
+                        walletBalance.classList.add('d-none');
+                        hiddenBalance.classList.remove('d-none');
+                        this.classList.replace('bi-eye-slash', 'bi-eye');
+                    }
+                });
+            }
 
             // --- Network selection ---
             networkOptions.forEach(option => {
@@ -302,21 +368,29 @@
                 'etisalat': ['0809','0817','0818','0908','0909']
             };
 
-            phoneInput.addEventListener('input', function () {
-                const val = this.value;
+            const detectNetwork = function () {
+                const val = phoneInput.value.replace(/\s+/g, '');
                 if (val.length >= 4) {
                     const prefix = val.substring(0, 4);
+                    const prefix5 = val.substring(0, 5);
+                    
                     for (const network in networkPrefixes) {
-                        if (networkPrefixes[network].includes(prefix)) {
+                        if (networkPrefixes[network].includes(prefix) || networkPrefixes[network].includes(prefix5)) {
                             const opt = document.querySelector(`.network-option[data-network="${network}"]`);
-                            if (opt) opt.click();
-                            networkResultDiv.textContent = network.toUpperCase() + ' detected';
+                            if (opt && !opt.classList.contains('active')) {
+                                opt.click();
+                                networkResultDiv.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${network.toUpperCase()} detected`;
+                            }
                             return;
                         }
                     }
                 }
-                networkResultDiv.textContent = '';
-            });
+                // Don't clear manual selection if no match found, just clear the "detected" text
+                if (val.length < 4) networkResultDiv.textContent = '';
+            };
+
+            phoneInput.addEventListener('input', detectNetwork);
+            phoneInput.addEventListener('paste', () => setTimeout(detectNetwork, 100));
 
             // --- Recent Recipient selection ---
             window.selectRecentRecipient = function(number, network) {

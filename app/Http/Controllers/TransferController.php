@@ -37,7 +37,7 @@ class TransferController extends Controller
             ->filter(fn($item) => !empty($item['account_no']))
             ->unique('account_no')
             ->values()
-            ->take(10);
+            ->take(15);
 
         return view('transfer.index', compact('recentRecipients'));
     }

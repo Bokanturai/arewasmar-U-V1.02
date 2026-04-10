@@ -29,4 +29,20 @@ class Transaction extends Model
     protected $casts = [
         'metadata' => 'array',
     ];
+
+    /**
+     * Get the standardized status name.
+     */
+    public function getNormalizedStatusAttribute()
+    {
+        return \App\Helpers\StatusHelper::normalize($this->status);
+    }
+
+    /**
+     * Get the Bootstrap color for the status.
+     */
+    public function getStatusColorAttribute()
+    {
+        return \App\Helpers\StatusHelper::color($this->status);
+    }
 }

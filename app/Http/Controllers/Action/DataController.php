@@ -14,6 +14,7 @@ use App\Traits\ActiveUsers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class DataController extends Controller
 {
@@ -42,37 +43,36 @@ class DataController extends Controller
         );
 
         try {
-            // Fetch services that end with 'data' or are relevant data services
-            $servicename = DB::table('data_variations')
-                ->select(['service_id', 'service_name'])
-                ->where('status', 'enabled')
-                ->where(function($query) {
-                    $query->where('service_id', 'LIKE', '%data')
-                          ->orWhere('service_id', 'smile-direct')
-                          ->orWhere('service_id', 'spectranet');
-                })
-                ->distinct()
-                ->limit(6)
+            // Fetch recent data purchases for the sideboard
+            $recentPurchases = \App\Models\Report::where('user_id', $user->id)
+                ->where('type', 'data')
+                ->latest()
+                ->take(15)
                 ->get();
 
-            $priceList1 = DB::table('data_variations')->where('service_id', 'mtn-data')->paginate(10, ['*'], 'table1_page');
-            $priceList2 = DB::table('data_variations')->where('service_id', 'airtel-data')->paginate(10, ['*'], 'table2_page');
-            $priceList3 = DB::table('data_variations')->where('service_id', 'glo-data')->paginate(10, ['*'], 'table3_page');
-            $priceList4 = DB::table('data_variations')->where('service_id', 'etisalat-data')->paginate(10, ['*'], 'table4_page');
-            $priceList5 = DB::table('data_variations')->where('service_id', 'smile-direct')->paginate(10, ['*'], 'table5_page');
-            $priceList6 = DB::table('data_variations')->where('service_id', 'spectranet')->paginate(10, ['*'], 'table6_page');
-
-            // Fetch recent unique phone numbers for suggestions
-            $recentNumbers = \App\Models\Report::where('user_id', $user->id)
-                ->whereNotNull('phone_number')
-                ->latest()
+            // Fetch reliable plans (success rate > 90% or recently successful)
+            $reliablePlans = DB::table('data_variations')
+                ->where('status', 'enabled')
+                ->whereIn('variation_code', function($query) {
+                    $query->select('ref') // This is a placeholder logic
+                        ->from('report')
+                        ->where('type', 'data')
+                        ->where('status', 'successful')
+                        ->where('created_at', '>=', now()->subDays(1));
+                })
                 ->take(10)
-                ->pluck('phone_number')
-                ->unique();
+                ->get();
+            
+            // If none found by logic, just show some popular ones
+            if ($reliablePlans->isEmpty()) {
+                $reliablePlans = DB::table('data_variations')
+                    ->where('status', 'enabled')
+                    ->take(5)
+                    ->get();
+            }
 
             return view('utilities.buy-data', compact(
-                'servicename', 'priceList1', 'priceList2', 'priceList3',
-                'priceList4', 'priceList5', 'priceList6', 'wallet', 'recentNumbers'
+                'wallet', 'recentPurchases', 'reliablePlans'
             ));
         } catch (\Exception $e) {
             Log::error("Error loading data services: " . $e->getMessage());
@@ -95,44 +95,6 @@ class DataController extends Controller
     }
 
     /**
-     * Sync Variations from API
-     */
-    public function getVariation(Request $request)
-    {
-        try {
-            $response = Http::get(env('VARIATION_URL') . $request->type);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $service_name = $data['content']['ServiceName'] ?? null;
-                $service_id = $data['content']['serviceID'] ?? null;
-                $convinience_fee = $data['content']['convinience_fee'] ?? 0;
-
-                if (isset($data['content']['varations'])) {
-                    foreach ($data['content']['varations'] as $variation) {
-                        DB::table('data_variations')->updateOrInsert(
-                            ['variation_code' => $variation['variation_code']],
-                            [
-                                'service_name'    => $service_name,
-                                'service_id'      => $service_id,
-                                'convinience_fee' => $convinience_fee,
-                                'name'            => $variation['name'],
-                                'variation_amount'=> $variation['variation_amount'],
-                                'fixedPrice'      => $variation['fixedPrice'],
-                                'status'          => 'enabled',
-                                'created_at'      => Carbon::now(),
-                                'updated_at'      => Carbon::now()
-                            ]
-                        );
-                    }
-                }
-            } else {
-            }
-        } catch (\Exception $e) {
-            
-        }
-    }
-    /**
      * Buy Data Bundle
      */
     public function buydata(Request $request)
@@ -142,6 +104,16 @@ class DataController extends Controller
             'mobileno' => 'required|numeric|digits:11',
             'bundle'   => 'required|string'
         ]);
+
+        $user = Auth::user();
+        
+        // Backend Double-Click/Idempotency Prevention
+        $lockKey = 'data_purchase_lock_' . $user->id;
+        $lock = Cache::lock($lockKey, 30); // 30-second lock
+
+        if (!$lock->get()) {
+            return back()->with('error', 'A transaction is already in progress. Please wait a moment.');
+        }
 
         $requestId = RequestIdHelper::generateRequestId();
         $user      = Auth::user();
@@ -157,10 +129,15 @@ class DataController extends Controller
             return back()->with('error', 'Wallet not found.');
         }
 
-        // Fetch Bundle Details
-        $variation = DB::table('data_variations')->where('variation_code', $request->bundle)->first();
+        // Fetch Bundle Details with network compatibility check
+        $variation = DB::table('data_variations')
+            ->where('variation_code', $request->bundle)
+            ->where('service_id', 'LIKE', $request->network . '%')
+            ->where('status', 'enabled')
+            ->first();
+
         if (!$variation) {
-             return back()->with('error', 'Invalid data bundle selected.');
+             return back()->with('error', 'Invalid data bundle selected for the chosen network.');
         }
         
         $amount = $variation->variation_amount; // Face value / API price
@@ -218,19 +195,28 @@ class DataController extends Controller
         $payableAmount = $amount - $discountAmount;
         // --- Discount Logic End ---
 
-        if ($wallet->balance < $payableAmount) {
-            return back()->with('error', 'Insufficient wallet balance! You need ₦' . number_format($payableAmount, 2));
-        }
-
-        // 0. Preliminary Wallet Status Check
-        if (($wallet->status ?? 'inactive') !== 'active') {
-             return redirect()->back()->with('error', 'Your wallet is not active. Please contact support.');
-        }
-
         DB::beginTransaction();
 
         try {
-            // 4. Create Preliminary Records & Charge Wallet
+            // 4. Fetch Wallet with Row Locking to prevent race conditions
+            $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
+            
+            if (!$wallet) {
+                DB::rollBack();
+                return back()->with('error', 'Wallet not found.');
+            }
+
+            if ($wallet->balance < $payableAmount) {
+                DB::rollBack();
+                return back()->with('error', 'Insufficient wallet balance! You need ₦' . number_format($payableAmount, 2));
+            }
+
+            // Wallet Status Check
+            if (($wallet->status ?? 'inactive') !== 'active') {
+                DB::rollBack();
+                return back()->with('error', 'Your wallet is not active. Please contact support.');
+            }
+
             $oldBalance = $wallet->balance;
             $wallet->decrement('balance', $payableAmount);
             $newBalance = $wallet->balance;
@@ -258,7 +244,7 @@ class DataController extends Controller
                 'amount'       => $amount,
                 'status'       => 'pending',
                 'type'         => 'data',
-                'description'  => "Data purchase: {$description}",
+                'description'  => "Data purchase: {$description} [{$request->bundle}]",
                 'old_balance'  => $oldBalance,
                 'new_balance'  => $newBalance,
                 'service_id'   => $serviceField ? $serviceField->id : null,
@@ -270,7 +256,7 @@ class DataController extends Controller
                 'secret-key' => env('SECRET_KEY'),
             ])->post(env('MAKE_PAYMENT'), [
                 'request_id'     => $requestId,
-                'serviceID'      => $request->network,
+                'serviceID'      => $variation->service_id,
                 'billersCode'    => env('BIILER_CODE'),
                 'variation_code' => $request->bundle,
                 'phone'          => $request->mobileno,
@@ -313,18 +299,41 @@ class DataController extends Controller
 
                 Log::error('Data API Response Error', ['response' => $data]);
                 $errorMsg = $data['message'] ?? 'Data purchase failed. Please try again.';
+                
+                // If it's a known failure code from API, we refund.
+                $wallet->increment('balance', $payableAmount);
+                $transaction->update(['status' => 'failed']);
+                $report->update([
+                    'status'      => 'failed',
+                    'description' => "Failed: " . (isset($data['message']) ? $data['message'] : 'API Error'),
+                ]);
             } else {
+                // HTTP Connection Failure / Timeout - DANGEROUS TO REFUND IMMEDIATELY
                 Log::error('Data API HTTP Error', ['status' => $response->status(), 'body' => $response->body()]);
-                $errorMsg = 'Data purchase failed due to service error.';
+                $errorMsg = 'Service is temporarily unresponsive. Your transaction is pending verification.';
+                
+                // We keep it as "pending" for admin to verify
+                $transaction->update(['status' => 'pending_verification']);
+                $report->update([
+                    'status'      => 'pending',
+                    'description' => 'Connection timeout. Pending manual verification.',
+                ]);
             }
 
-            // API Failed - REFUND
-            $wallet->increment('balance', $payableAmount);
-            $transaction->update(['status' => 'failed']);
-            $report->update([
-                'status'      => 'failed',
-                'description' => "Failed: " . (isset($data['message']) ? $data['message'] : 'API Error'),
-            ]);
+            // Check if this plan has failed 5 times today for this user (or globally)
+            $failCount = \App\Models\Report::where('type', 'data')
+                ->where('description', 'LIKE', "%[{$request->bundle}]%")
+                ->where('status', 'failed')
+                ->whereDate('created_at', Carbon::today())
+                ->count();
+
+            if ($failCount >= 5) {
+                DB::table('data_variations')
+                    ->where('variation_code', $request->bundle)
+                    ->update(['status' => 'disabled']);
+                
+                Log::warning("Data plan {$request->bundle} deactivated due to 5 failures today.");
+            }
 
             DB::commit();
             return back()->with('error', $errorMsg);
@@ -344,7 +353,7 @@ class DataController extends Controller
         try {
             $bundles = DB::table('data_variations')
                 ->select(['name', 'variation_code'])
-                ->where('service_id', $request->id)
+                ->where('service_id', 'LIKE', $request->id . '%')
                 ->where('status', 'enabled')
                 ->get();
 

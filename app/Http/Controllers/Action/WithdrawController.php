@@ -80,7 +80,7 @@ class WithdrawController extends Controller
             ->filter(fn($item) => !empty($item['bank_code']) && !empty($item['account_no']))
             ->unique(fn($item) => $item['bank_code'] . $item['account_no'])
             ->values()
-            ->take(30);
+            ->take(15);
 
         return view('wallet.withdraw', compact('banks', 'totalVolume', 'user', 'recentRecipients', 'eligibilityAmount'));
     }

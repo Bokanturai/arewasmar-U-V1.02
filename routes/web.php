@@ -98,7 +98,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/buy-data', [DataController::class, 'buydata'])->name('buydata');
     Route::get('/fetch-data-bundles', [DataController::class, 'fetchBundles'])->name('fetch.bundles');
     Route::get('/fetch-data-bundles-price', [DataController::class, 'fetchBundlePrice'])->name('fetch.bundle.price');
-    Route::post('/verify-pin', [DataController::class, 'verifyPin'])->name('verify.pin');
+    Route::post('/verify-pin', [DataController::class, 'verifyPin'])->middleware('throttle:5,1')->name('verify.pin');
 
 
     // SME Data (New Service)

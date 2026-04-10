@@ -47,24 +47,36 @@ class SmeDataController extends Controller
 
         $networks = SmeData::select('network')->distinct()->get();
 
-        // Price lists for the advert section
-        $priceList1 = DB::table('data_variations')->where('service_id', 'mtn-data')->paginate(10, ['*'], 'table1_page');
-        $priceList2 = DB::table('data_variations')->where('service_id', 'airtel-data')->paginate(10, ['*'], 'table2_page');
-        $priceList3 = DB::table('data_variations')->where('service_id', 'glo-data')->paginate(10, ['*'], 'table3_page');
-        $priceList4 = DB::table('data_variations')->where('service_id', 'etisalat-data')->paginate(10, ['*'], 'table4_page');
-        $priceList5 = DB::table('data_variations')->where('service_id', 'smile-direct')->paginate(10, ['*'], 'table5_page');
-        $priceList6 = DB::table('data_variations')->where('service_id', 'spectranet')->paginate(10, ['*'], 'table6_page');
+        // Fetch recent SME transactions for the sideboard
+        $recentPurchases = Transaction::where('user_id', $user->id)
+            ->where('description', 'LIKE', '%SME Data%')
+            ->latest()
+            ->take(15)
+            ->get();
+
+        // Fetch reliable SME plans (recently successful)
+        $reliablePlans = SmeData::where('status', 'enabled')
+            ->whereIn('data_id', function($query) {
+                $query->select(DB::raw('JSON_EXTRACT(metadata, "$.data_id")'))
+                    ->from('transactions')
+                    ->where('status', 'completed')
+                    ->where('description', 'LIKE', '%SME Data%')
+                    ->where('created_at', '>=', Carbon::now()->subDays(3));
+            })
+            ->take(6)
+            ->get();
+
+        // Fallback for reliable plans if none recently found
+        if ($reliablePlans->isEmpty()) {
+            $reliablePlans = SmeData::where('status', 'enabled')->take(6)->get();
+        }
 
         return view('utilities.buy-sme-data', compact(
             'user', 
             'wallet', 
             'networks',
-            'priceList1',
-            'priceList2',
-            'priceList3',
-            'priceList4',
-            'priceList5',
-            'priceList6'
+            'recentPurchases',
+            'reliablePlans'
         ));
     }
 

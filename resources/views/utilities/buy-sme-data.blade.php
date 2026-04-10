@@ -1,291 +1,545 @@
 <x-app-layout>
-    <title>Smart Link - SME Data Plans</title>
+    <title>Arewa Smart - {{ $title ?? 'SME Data' }}</title>
 
-    <div class="container-fluid px-0 px-md-3">
-        <div class="row g-0 g-md-4 justify-content-center mt-3">
+    <div class="container-fluid px-0 px-md-3 py-3">
+        <div class="row g-3 g-md-4 justify-content-center">
             
             {{-- Left Column: SME Data Form --}}
-            <div class="col-12 col-xl-5 mb-4">
-                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center p-3 p-md-4 rounded-0 rounded-top-md-4">
-                            <div class="card-title fw-semibold">
-                                <i class="ti ti-world me-2"></i> SME Data Service
-                            </div>
+            <div class="col-12 col-xl-6">
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-4 bounce-in">
+                    <div class="card-header bg-success text-white p-3 p-md-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-globe2 me-2"></i>SME Data Service</h5>
+                            <span class="badge bg-white text-success rounded-pill px-3 py-2">
+                                Balance: ₦{{ number_format($wallet->balance ?? 0, 2) }}
+                            </span>
                         </div>
+                    </div>
 
-                        <div class="card-body">
-                            <center class="mb-3">
-                                <img src="{{ asset('assets/img/apps/network_providers.png') }}"
-                                     class="img-fluid mb-3 rounded-2"
-                                     style="width: 45%; min-width: 120px;" alt="Network Providers">
-                            </center>
+                    <div class="card-body p-3 p-md-4">
+                        {{-- Flash Messages --}}
+                        @if (session('success'))
+                            <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+                                {!! session('success') !!}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
 
-                            <p class="text-center text-muted mb-4">
-                                Select network, plan type, and your desired data bundle.
-                            </p>
+                        @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
 
-                            {{-- Flash Messages --}}
-                            @if (session('success'))
-                                <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
-                                    {!! session('success') !!}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            @endif
+                        <form id="buySmeDataForm" method="POST" action="{{ route('buy-sme-data.submit') }}">
+                            @csrf
 
-                            @if (session('error'))
-                                <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
-                                    {{ session('error') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            @endif
-
-                            {{-- Buy SME Data Form --}}
-                            <form id="buySmeDataForm" method="POST" action="{{ route('buy-sme-data.submit') }}">
-                                @csrf
-
-                                {{-- Network Selection --}}
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Select Network</label>
-                                    <select name="network" id="sme_network" class="form-select text-center" required>
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label class="form-label fw-semibold small">Network</label>
+                                    <select name="network" id="sme_network" class="form-select border-light shadow-sm" required>
                                         <option value="">Choose Network</option>
                                         @foreach ($networks as $network)
                                             <option value="{{ $network->network }}">{{ $network->network }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-
-                                {{-- Data Type subselection (Gifting, SME, Corporate etc) --}}
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Data Type</label>
-                                    <select name="type" id="sme_type" class="form-select text-center" required>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Data Type</label>
+                                    <select name="type" id="sme_type" class="form-select border-light shadow-sm" required>
                                         <option value="">Select Type</option>
                                     </select>
                                 </div>
+                            </div>
 
-                                {{-- Data Plan --}}
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Data Plan</label>
-                                    <select name="plan" id="sme_plan" class="form-select text-center" required>
-                                        <option value="">Select Plan</option>
-                                    </select>
-                                </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Select Plan</label>
+                                <select name="plan" id="sme_plan" class="form-select border-light shadow-sm" required>
+                                    <option value="">Choose a plan</option>
+                                </select>
+                            </div>
 
-                                {{-- Amount --}}
-                                <div class="mb-3 text-start">
-                                    <label for="amountToPay" class="form-label fw-semibold d-flex justify-content-between">
-                                        <span>Amount to Pay</span>
-                                        <small class="text-muted">Balance: 
-                                            <strong class="text-success">
-                                                ₦{{ number_format($wallet->balance ?? 0, 2) }}
-                                            </strong>
-                                        </small>
-                                    </label>
-                                    <input type="text" id="sme_amount" name="amount" readonly class="form-control text-center bg-light fw-bold" placeholder="₦ 0.00" />
-                                </div>
-
-                                {{-- Phone Number --}}
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold">Recipient Phone Number</label>
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label class="form-label fw-semibold small">Phone Number</label>
                                     <input type="text" id="sme_mobile" name="mobileno"
-                                           class="form-control text-center"
+                                           class="form-control border-light shadow-sm"
                                            placeholder="08012345678"
                                            maxlength="11" required>
                                 </div>
-
-                                {{-- Submit --}}
-                                <div class="d-grid mt-4">
-                                    <button type="button" class="btn btn-primary btn-lg fw-semibold"
-                                            data-bs-toggle="modal" data-bs-target="#pinModal">
-                                        Purchase Data
-                                    </button>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Payable Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-light shadow-sm">₦</span>
+                                        <input type="text" id="sme_amount" name="amount" readonly class="form-control bg-light border-light shadow-sm fw-bold text-success" placeholder="0.00" />
+                                    </div>
                                 </div>
-                            </form>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-success btn-lg fw-bold rounded-pill shadow-sm py-3"
+                                        data-bs-toggle="modal" data-bs-target="#pinModal">
+                                    Purchase SME Data <i class="bi bi-chevron-right ms-1"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {{-- Reliable SME Plans Footer --}}
+                    <div class="card-footer bg-light border-0 p-3 p-md-4">
+                        <small class="fw-bold text-muted d-block mb-3"><i class="bi bi-check-all text-success me-1"></i>VERIFIED SME BUNDLES</small>
+                        <div class="d-flex flex-wrap gap-2">
+                            @forelse($reliablePlans as $plan)
+                                <button type="button" class="btn btn-white border shadow-sm btn-sm rounded-pill py-2 px-3 fw-semibold small" 
+                                        onclick="applySmePlan('{{ $plan->network }}', '{{ $plan->plan_type }}', '{{ $plan->data_id }}')">
+                                    {{ $plan->network }} {{ $plan->size }} <span class="text-success fs-7">₦{{ number_format($plan->variation_amount, 0) }}</span>
+                                </button>
+                            @empty
+                                <small class="text-muted">No featured bundles available.</small>
+                            @endforelse
                         </div>
                     </div>
                 </div>
-
-                </div>
             </div>
 
-            {{-- Right Column: Information --}}
-            <div class="col-12 col-xl-7 mt-2 mt-md-0">
-                @include('utilities.advert')
-            </div>
-        </div>
-    </div>
-
-    {{-- PIN Confirmation Modal --}}
-    <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow-lg border-0">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-semibold" id="pinModalLabel">
-                        <i class="bi bi-shield-lock-fill me-2 text-white"></i> Confirm Transaction
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body text-center py-4">
-                    <p class="text-muted mb-3 small">
-                        Please enter your <strong>5-digit transaction PIN</strong> to authorize this purchase.
-                    </p>
-
-                    <div class="d-flex justify-content-center">
-                        <input 
-                            type="password" 
-                            name="pin" 
-                            id="pinInput" 
-                            class="form-control text-center fw-bold fs-3 py-3 border-2 border-success rounded-pill shadow-sm w-50" 
-                            maxlength="5" 
-                            inputmode="numeric" 
-                            placeholder="•••••"
-                            required
-                            style="letter-spacing: 10px; font-family: 'Courier New', monospace;"
-                        >
+            {{-- Right Column: AI Smart Chatbot & History --}}
+            <div class="col-12 col-xl-6">
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden h-100 d-flex flex-column shadow-hover transition-all" style="min-height: 600px;">
+                    <div class="card-header bg-dark text-white p-3 p-md-4 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-success rounded-circle p-2 shadow-sm" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-robot fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Arewa Smart AI Guide</h6>
+                                <small class="text-success small fw-bold"><i class="bi bi-circle-fill fs-8 me-1"></i> Online Assistant</small>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-light border-0 rounded-circle" data-bs-toggle="collapse" data-bs-target="#smeHistoryCollapse" title="Toggle History">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-light border-0 rounded-circle" onclick="clearChat()" title="Clear Chat"><i class="bi bi-trash"></i></button>
+                        </div>
                     </div>
 
-                    <small id="pinError" class="text-danger d-none mt-3 d-block fw-semibold">
-                        Incorrect PIN. Please try again.
-                    </small>
-                </div>
+                    {{-- Collapsible History Section --}}
+                    <div class="collapse show" id="smeHistoryCollapse">
+                        <div class="bg-white border-bottom shadow-sm">
+                            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light-subtle">
+                                <small class="fw-bold text-muted text-uppercase mb-0 fs-7 px-2"><i class="bi bi-clock-history me-2"></i>Recent SME Top-ups</small>
+                                <span class="badge bg-success rounded-pill small">{{ count($recentPurchases) }}</span>
+                            </div>
+                            <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light fs-8 sticky-top">
+                                        <tr>
+                                            <th class="border-0 px-3 py-2">Info</th>
+                                            <th class="border-0 py-2">Number</th>
+                                            <th class="border-0 py-2">Amount</th>
+                                            <th class="border-0 text-end px-3 py-2">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="fs-7">
+                                        @forelse($recentPurchases as $history)
+                                            @php
+                                                $meta = json_decode($history->metadata, true);
+                                                $phone = $meta['phone'] ?? substr($history->description, -11);
+                                                $network = $meta['network'] ?? 'Data';
+                                            @endphp
+                                            <tr onclick="repeatSme('{{ $network }}', '{{ $phone }}')" style="cursor: pointer;">
+                                                <td class="px-3 fw-bold text-uppercase py-2 text-success small">{{ $network }}</td>
+                                                <td class="py-2 small">{{ $phone }}</td>
+                                                <td class="py-2 text-dark fw-semibold small">₦{{ number_format($history->amount, 0) }}</td>
+                                                <td class="text-end px-3 py-2">
+                                                    <span class="badge rounded-pill {{ $history->status == 'completed' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}" style="font-size: 10px;">
+                                                        {{ ucfirst($history->status) }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4 text-muted small">No recent SME purchases.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="modal-footer border-0 justify-content-center pb-4">
-                    <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="button" id="confirmPinBtn" class="btn btn-primary px-4 rounded-pill fw-semibold">
-                        <span class="spinner-border spinner-border-sm me-2 d-none" id="pinLoader" role="status" aria-hidden="true"></span>
-                        <span id="confirmPinText">Confirm Purchase</span>
-                    </button>
+                    <div class="card-body bg-light-subtle flex-grow-1 overflow-auto p-3 p-md-4" id="aiChatWindow">
+                        <div class="d-flex gap-2 mb-4 animate-fade-in">
+                            <div class="bg-success text-white rounded-circle p-1 align-self-start shadow-sm" style="width:28px;height:28px;font-size:12px;display:flex;align-items:center;justify-content:center; flex-shrink:0;">AS</div>
+                            <div class="bg-white p-3 rounded-4 rounded-start-0 shadow-sm border small" style="max-width: 85%;">
+                                <p class="mb-0 text-dark">Hello! I'm your SME Data specialist. SME bundles are affordable and last up to 30 days. Need recommendations for MTN or Airtel?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="aiTypingIndicator" class="px-4 py-2 d-none">
+                        <small class="text-muted"><i class="bi bi-stars spin me-1"></i> Analyzing SME options...</small>
+                    </div>
+
+                    <div class="card-footer bg-white border-top p-3 p-md-4 mt-auto">
+                        <div class="d-flex gap-2 mb-3 overflow-auto pb-2 no-scrollbar">
+                            <button class="btn btn-xs btn-outline-success rounded-pill text-nowrap px-3 shadow-sm" onclick="askAi('Which MTN SME plan is best?')">MTN SME</button>
+                            <button class="btn btn-xs btn-outline-success rounded-pill text-nowrap px-3 shadow-sm" onclick="askAi('Show me Airtel Gifting plans')">Airtel Gift</button>
+                            <button class="btn btn-xs btn-outline-success rounded-pill text-nowrap px-3 shadow-sm" onclick="askAi('Cheapest Corporate Data?')">Corporate</button>
+                        </div>
+                        <div class="input-group bg-light rounded-pill p-1 border shadow-sm focus-within-shadow">
+                            <input type="text" id="aiInput" class="form-control border-0 bg-transparent ps-3" placeholder="Ask about SME data...">
+                            <button class="btn btn-success rounded-circle p-2 mx-1 shadow-sm d-flex align-items-center justify-content-center" id="sendAiBtn" style="width:38px;height:38px;">
+                                <i class="bi bi-send-fill fs-14"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
-<div class="row mt-3">
 
-@push('scripts')
+    {{-- PIN Modal --}}
+    @include('pages.pin')
+
+    <style>
+        .fs-8 { font-size: 0.7rem; }
+        .fs-7 { font-size: 0.8rem; }
+        .fs-14 { font-size: 14px; }
+        .spin { animation: fa-spin 2s infinite linear; }
+        @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(359deg); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .shadow-hover:hover { box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important; }
+        .transition-all { transition: all 0.3s ease; }
+        .btn-xs { padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600; }
+        .focus-within-shadow:focus-within { box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1) !important; border-color: #198754 !important; }
+        .animate-fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .bounce-in { animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+        @keyframes bounceIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-    $(document).ready(function () {
-        $("#sme_network").change(function () {
-            let service_id = $(this).val();
-            if(!service_id) return;
-            
-            $.ajax({
-                type: "get",
-                url: "{{ url('sme-data/fetch-data-type') }}",
-                data: { id: service_id },
-                dataType: "json",
-                success: function (response) {
-                    var len = response.length;
-                    $("#sme_type").empty();
-                    $("#sme_type").append("<option value=''>Data Type</option>");
+        let convHistory = [];
 
-                    for (var i = 0; i < len; i++) {
-                        var plan_type = response[i]["plan_type"];
-                        $("#sme_type").append("<option value='" + plan_type + "'>" + plan_type + "</option>");
+        $(document).ready(function () {
+            // SME AJAX Selection Logic
+            $("#sme_network").change(function () {
+                let service_id = $(this).val();
+                if(!service_id) return;
+                $("#sme_type").empty().append("<option value=''>Loading...</option>");
+                
+                $.ajax({
+                    type: "get",
+                    url: "{{ url('sme-data/fetch-data-type') }}",
+                    data: { id: service_id },
+                    success: function (response) {
+                        $("#sme_type").empty().append("<option value=''>Data Type</option>");
+                        response.forEach(item => {
+                            $("#sme_type").append(`<option value="${item.plan_type}">${item.plan_type}</option>`);
+                        });
+                        $("#sme_plan").empty().append("<option value=''>Select Plan</option>");
+                        $("#sme_amount").val("");
                     }
-                    $("#sme_plan").empty().append("<option value=''>Select Plan</option>");
-                    $("#sme_amount").val("");
-                },
-                error: function (data) {
-                    console.error("Error fetching data types");
-                },
+                });
             });
-        });
 
-        $("#sme_type").change(function () {
-            let service_id = $("#sme_network").val();
-            let type = $(this).val();
-            if(!service_id || !type) return;
+            $("#sme_type").change(function () {
+                let service_id = $("#sme_network").val();
+                let type = $(this).val();
+                if(!service_id || !type) return;
+                $("#sme_plan").empty().append("<option value=''>Fetching plans...</option>");
 
-            $.ajax({
-                type: "get",
-                url: "{{ url('sme-data/fetch-data-plan') }}",
-                data: { id: service_id, type: type },
-                dataType: "json",
-                success: function (response) {
-                    var len = response.length;
-                    $("#sme_plan").empty();
-                    $("#sme_plan").append("<option value=''>Data Plan</option>");
-
-                    for (var i = 0; i < len; i++) {
-                        var plan_text = response[i]["size"] + " " + response[i]["plan_type"] + " - " + response[i]["validity"];
-                        var id = response[i]["data_id"];
-                        $("#sme_plan").append("<option value='" + id + "'>" + plan_text + "</option>");
+                $.ajax({
+                    type: "get",
+                    url: "{{ url('sme-data/fetch-data-plan') }}",
+                    data: { id: service_id, type: type },
+                    success: function (response) {
+                        $("#sme_plan").empty().append("<option value=''>Data Plan</option>");
+                        response.forEach(item => {
+                            let text = item.size + " - " + item.validity;
+                            $("#sme_plan").append(`<option value="${item.data_id}">${text}</option>`);
+                        });
+                        $("#sme_amount").val("");
                     }
-                    $("#sme_amount").val("");
-                },
-                error: function (data) {
-                    console.error("Error fetching data plans");
-                },
+                });
             });
+
+            $("#sme_plan").change(function () {
+                let plan_id = $(this).val();
+                if(!plan_id) { $("#sme_amount").val(""); return; }
+
+                $.ajax({
+                    type: "get",
+                    url: "{{ url('sme-data/fetch-sme-data-bundles-price') }}",
+                    data: { id: plan_id },
+                    success: function (response) {
+                        $("#sme_amount").val(response);
+                    }
+                });
+            });
+
+            // AI Chatbot Logic
+            const aiWin = document.getElementById('aiChatWindow');
+            const aiIn = document.getElementById('aiInput');
+            const typeInd = document.getElementById('aiTypingIndicator');
+
+            const addBubble = (txt, role = 'user') => {
+                const wrap = document.createElement('div');
+                wrap.className = `d-flex mb-4 animate-fade-in ${role === 'user' ? 'justify-content-end' : ''}`;
+                
+                const html = role === 'user'
+                    ? `<div class="bg-success text-white p-3 rounded-4 rounded-top-end-0 shadow-sm border-0 small shadow-hover" style="max-width: 85%;">${txt}</div>`
+                    : `<div class="d-flex gap-2">
+                        <div class="bg-success text-white rounded-circle p-1 align-self-start shadow-sm" style="width:28px;height:28px;font-size:12px;display:flex;align-items:center;justify-content:center; flex-shrink:0;">AS</div>
+                        <div class="bg-white p-3 rounded-4 rounded-start-0 shadow-sm border small shadow-hover text-dark" style="max-width: 85%;">${txt}</div>
+                       </div>`;
+                
+                wrap.innerHTML = html;
+                aiWin.appendChild(wrap);
+                aiWin.scrollTop = aiWin.scrollHeight;
+                convHistory.push({ role, content: txt });
+            };
+
+            window.askAi = (txt) => {
+                if(!txt.trim()) return;
+                addBubble(txt, 'user');
+                aiIn.value = '';
+                typeInd.classList.remove('d-none');
+
+                fetch("{{ route('ai.ask') }}", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": "{{ csrf_token() }}" },
+                    body: JSON.stringify({
+                        comment: "User is on the SME Data page inquiring about bundles.",
+                        question: txt,
+                        history: convHistory
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    typeInd.classList.add('d-none');
+                    if(data.success) addBubble(data.answer, 'assistant');
+                    else addBubble("I'm sorry, I'm having trouble connecting right now.", 'assistant');
+                })
+                .catch(() => {
+                    typeInd.classList.add('d-none');
+                    addBubble("Network error. Please try again.", 'assistant');
+                });
+            };
+
+            $('#sendAiBtn').on('click', () => askAi(aiIn.value));
+            $('#aiInput').on('keypress', (e) => { if(e.key === 'Enter') askAi(aiIn.value); });
         });
 
-        $("#sme_plan").change(function () {
-            let plan_id = $(this).val();
-            if(!plan_id) {
-                $("#sme_amount").val("");
-                return;
-            }
+        // Global Helpers
+        function repeatSme(net, phone) {
+            $("#sme_network").val(net).trigger('change');
+            $("#sme_mobile").val(phone).addClass('border-success');
+            setTimeout(() => $("#sme_mobile").removeClass('border-success'), 1000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-            $.ajax({
-                type: "get",
-                url: "{{ url('sme-data/fetch-sme-data-bundles-price') }}",
-                data: { id: plan_id },
-                dataType: "json",
-                success: function (response) {
-                    $("#sme_amount").val("₦ " + response);
-                },
-                error: function (data) {
-                    console.error("Error fetching price");
-                },
-            });
-        });
+        function applySmePlan(net, type, pid) {
+            $("#sme_network").val(net).trigger('change');
+            setTimeout(() => {
+                $("#sme_type").val(type).trigger('change');
+                setTimeout(() => {
+                    $("#sme_plan").val(pid).trigger('change');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 800);
+            }, 800);
+        }
 
-        // PIN Confirmation Logic
+        function clearChat() {
+            document.getElementById('aiChatWindow').innerHTML = '';
+            convHistory = [];
+        }
+
+        // PIN Verification
         $('#confirmPinBtn').on('click', function() {
-            const confirmBtn = $(this);
-            const loader = $('#pinLoader');
-            const confirmText = $('#confirmPinText');
-            const pinError = $('#pinError');
             const pin = $('#pinInput').val().trim();
-
-            if (!pin) {
-                pinError.text("Please enter your PIN.").removeClass('d-none');
-                return;
-            }
-
-            confirmBtn.prop('disabled', true);
-            loader.removeClass('d-none');
-            confirmText.text("Verifying...");
-
+            if(!pin) return;
+            $(this).prop('disabled', true);
+            $('#pinLoader').removeClass('d-none');
+            
             $.ajax({
                 type: "POST",
                 url: "{{ route('verify.pin') }}",
-                data: { 
-                    pin: pin,
-                    _token: "{{ csrf_token() }}"
-                },
+                data: { pin: pin, _token: "{{ csrf_token() }}" },
                 success: function(data) {
-                    if (data.valid) {
-                        $('#buySmeDataForm').submit();
-                    } else {
-                        pinError.text("Incorrect PIN. Please try again.").removeClass('d-none');
-                        confirmBtn.prop('disabled', false);
-                        loader.addClass('d-none');
-                        confirmText.text("Confirm Purchase");
+                    if (data.valid) $('#buySmeDataForm').submit();
+                    else {
+                        alert("Incorrect PIN.");
+                        $('#confirmPinBtn').prop('disabled', false);
+                        $('#pinLoader').addClass('d-none');
                     }
-                },
-                error: function() {
-                    pinError.text("Network error. Please try again.").removeClass('d-none');
-                    confirmBtn.prop('disabled', false);
-                    loader.addClass('d-none');
-                    confirmText.text("Confirm Purchase");
                 }
             });
         });
-    });
     </script>
-@endpush
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let convHistory = [];
+
+        $(document).ready(function () {
+            // SME AJAX Selection Logic
+            $("#sme_network").change(function () {
+                let service_id = $(this).val();
+                if(!service_id) return;
+                $("#sme_type").empty().append("<option value=''>Loading...</option>");
+                
+                $.ajax({
+                    type: "get",
+                    url: "{{ url('sme-data/fetch-data-type') }}",
+                    data: { id: service_id },
+                    success: function (response) {
+                        $("#sme_type").empty().append("<option value=''>Data Type</option>");
+                        response.forEach(item => {
+                            $("#sme_type").append(`<option value="${item.plan_type}">${item.plan_type}</option>`);
+                        });
+                        $("#sme_plan").empty().append("<option value=''>Select Plan</option>");
+                        $("#sme_amount").val("");
+                    }
+                });
+            });
+
+            $("#sme_type").change(function () {
+                let service_id = $("#sme_network").val();
+                let type = $(this).val();
+                if(!service_id || !type) return;
+                $("#sme_plan").empty().append("<option value=''>Fetching plans...</option>");
+
+                $.ajax({
+                    type: "get",
+                    url: "{{ url('sme-data/fetch-data-plan') }}",
+                    data: { id: service_id, type: type },
+                    success: function (response) {
+                        $("#sme_plan").empty().append("<option value=''>Data Plan</option>");
+                        response.forEach(item => {
+                            let text = item.size + " - " + item.validity;
+                            $("#sme_plan").append(`<option value="${item.data_id}">${text}</option>`);
+                        });
+                        $("#sme_amount").val("");
+                    }
+                });
+            });
+
+            $("#sme_plan").change(function () {
+                let plan_id = $(this).val();
+                if(!plan_id) { $("#sme_amount").val(""); return; }
+
+                $.ajax({
+                    type: "get",
+                    url: "{{ url('sme-data/fetch-sme-data-bundles-price') }}",
+                    data: { id: plan_id },
+                    success: function (response) {
+                        $("#sme_amount").val(response);
+                    }
+                });
+            });
+
+            // AI Chatbot Logic
+            const aiWin = document.getElementById('aiChatWindow');
+            const aiIn = document.getElementById('aiInput');
+            const typeInd = document.getElementById('aiTypingIndicator');
+
+            const addBubble = (txt, role = 'user') => {
+                const wrap = document.createElement('div');
+                wrap.className = `d-flex mb-4 animate-fade-in ${role === 'user' ? 'justify-content-end' : ''}`;
+                
+                const html = role === 'user'
+                    ? `<div class="bg-success text-white p-3 rounded-4 rounded-top-end-0 shadow-sm border-0 small shadow-hover" style="max-width: 85%;">${txt}</div>`
+                    : `<div class="d-flex gap-2">
+                        <div class="bg-success text-white rounded-circle p-1 align-self-start shadow-sm" style="width:28px;height:28px;font-size:12px;display:flex;align-items:center;justify-content:center; flex-shrink:0;">AS</div>
+                        <div class="bg-white p-3 rounded-4 rounded-start-0 shadow-sm border small shadow-hover text-dark" style="max-width: 85%;">${txt}</div>
+                       </div>`;
+                
+                wrap.innerHTML = html;
+                aiWin.appendChild(wrap);
+                aiWin.scrollTop = aiWin.scrollHeight;
+                convHistory.push({ role, content: txt });
+            };
+
+            window.askAi = (txt) => {
+                if(!txt.trim()) return;
+                addBubble(txt, 'user');
+                aiIn.value = '';
+                typeInd.classList.remove('d-none');
+
+                fetch("{{ route('ai.ask') }}", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": "{{ csrf_token() }}" },
+                    body: JSON.stringify({
+                        comment: "User is on the SME Data page inquiring about bundles.",
+                        question: txt,
+                        history: convHistory
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    typeInd.classList.add('d-none');
+                    if(data.success) addBubble(data.answer, 'assistant');
+                    else addBubble("I'm sorry, I'm having trouble connecting right now.", 'assistant');
+                })
+                .catch(() => {
+                    typeInd.classList.add('d-none');
+                    addBubble("Network error. Please try again.", 'assistant');
+                });
+            };
+
+            $('#sendAiBtn').on('click', () => askAi(aiIn.value));
+            $('#aiInput').on('keypress', (e) => { if(e.key === 'Enter') askAi(aiIn.value); });
+        });
+
+        // Global Helpers
+        function repeatSme(net, phone) {
+            $("#sme_network").val(net).trigger('change');
+            $("#sme_mobile").val(phone).addClass('border-success');
+            setTimeout(() => $("#sme_mobile").removeClass('border-success'), 1000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function applySmePlan(net, type, pid) {
+            $("#sme_network").val(net).trigger('change');
+            setTimeout(() => {
+                $("#sme_type").val(type).trigger('change');
+                setTimeout(() => {
+                    $("#sme_plan").val(pid).trigger('change');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 800);
+            }, 800);
+        }
+
+        function clearChat() {
+            document.getElementById('aiChatWindow').innerHTML = '';
+            convHistory = [];
+        }
+
+        // PIN Verification
+        $('#confirmPinBtn').on('click', function() {
+            const pin = $('#pinInput').val().trim();
+            if(!pin) return;
+            $(this).prop('disabled', true);
+            $('#pinLoader').removeClass('d-none');
+            
+            $.ajax({
+                type: "POST",
+                url: "{{ route('verify.pin') }}",
+                data: { pin: pin, _token: "{{ csrf_token() }}" },
+                success: function(data) {
+                    if (data.valid) $('#buySmeDataForm').submit();
+                    else {
+                        alert("Incorrect PIN.");
+                        $('#confirmPinBtn').prop('disabled', false);
+                        $('#pinLoader').addClass('d-none');
+                    }
+                }
+            });
+        });
+    </script>
 </x-app-layout>

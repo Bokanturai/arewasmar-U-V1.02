@@ -1,5 +1,36 @@
 <x-app-layout>
     <title>Arewa Smart - {{ $title ?? 'Transfer to Smart User' }}</title>
+    
+    {{-- Custom CSS --}}
+    @push('styles')
+    <style>
+        /* Recent Recipients Scrollable Container */
+        #recentRecipientsBody {
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #df6808ff #f8f9fa;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-track {
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-thumb {
+            background-color: #df6808ff;
+            border-radius: 10px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-thumb:hover {
+            background-color: #c55a06ff;
+        }
+    </style>
+    @endpush
 
     <div class="container-fluid px-0 px-md-3">
         <div class="row justify-content-center py-3 py-lg-4 g-0 g-md-4">
@@ -152,7 +183,7 @@
                                 @if(isset($recentRecipients) && count($recentRecipients) > 0)
                                     <div class="d-flex flex-column gap-2">
                                         @foreach($recentRecipients as $recipient)
-                                            <div class="d-flex align-items-center p-3 rounded-4 bg-light border-0 shadow-sm recipeint-item"
+                                            <div class="d-flex align-items-center p-3 rounded-4 bg-light border-0 shadow-sm recipient-item"
                                                  style="cursor:pointer; transition:all .2s;"
                                                  onclick="selectRecentBank('{{ $recipient['bank_code'] }}', '{{ $recipient['account_no'] }}', '{{ $recipient['account_name'] }}')">
 

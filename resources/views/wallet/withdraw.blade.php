@@ -1,5 +1,36 @@
 <x-app-layout>
     <title>Arewa Smart - {{ $title ?? 'Withdraw Funds' }}</title>
+    
+    {{-- Custom CSS --}}
+    @push('styles')
+    <style>
+        /* Recent Recipients Scrollable Container */
+        #recentRecipientsBody {
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #df6808ff #f8f9fa;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-track {
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-thumb {
+            background-color: #df6808ff;
+            border-radius: 10px;
+        }
+
+        #recentRecipientsBody::-webkit-scrollbar-thumb:hover {
+            background-color: #c55a06ff;
+        }
+    </style>
+    @endpush
 
     <div class="page-body">
         <div class="container-fluid px-3">

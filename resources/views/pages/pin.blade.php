@@ -137,6 +137,9 @@
 
             {{-- Step 2 Footer --}}
             <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2 flex-nowrap d-none" id="pinStep_footer">
+                <button type="button" class="btn btn-light fw-semibold shadow-sm rounded-pill flex-fill" id="btnBackToConfirm">
+                    <i class="bi bi-chevron-left me-1"></i> Back
+                </button>
                 <button type="button" class="btn btn-success fw-bold shadow-sm rounded-pill flex-fill" id="confirmPinBtn">
                     <span id="pinLoader" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
                     <i class="bi bi-shield-lock-fill me-1" id="pinBtnIcon"></i>
@@ -160,6 +163,8 @@
         const btnBack        = document.getElementById('btnBackToConfirm');
         const confirmFoot    = document.getElementById('confirmationStep_footer');
         const pinFoot        = document.getElementById('pinStep_footer');
+        const confirmStep    = document.getElementById('confirmationStep');
+        const pinStep        = document.getElementById('pinStep');
 
         /* ── Toggle PIN visibility ──────────────────── */
         if (toggleBtn && pinInput) {
@@ -173,11 +178,14 @@
         /* ── Step forward ───────────────────────────── */
         if (btnGoToPin) {
             btnGoToPin.addEventListener('click', () => {
+                confirmStep.classList.add('d-none');
+                pinStep.classList.remove('d-none');
                 confirmFoot.classList.add('d-none');
                 pinFoot.classList.remove('d-none');
+                
                 const mt = document.getElementById('modalTitle');
                 const ms = document.getElementById('modalSubtitle');
-                if (mt) mt.textContent = 'Authorize Payout';
+                if (mt) mt.textContent = 'Authorize Transaction';
                 if (ms) ms.textContent = 'Step 2 of 2 — Security PIN';
                 setTimeout(() => pinInput?.focus(), 80);
             });
@@ -186,8 +194,11 @@
         /* ── Step back ──────────────────────────────── */
         if (btnBack) {
             btnBack.addEventListener('click', () => {
+                pinStep.classList.add('d-none');
+                confirmStep.classList.remove('d-none');
                 pinFoot.classList.add('d-none');
                 confirmFoot.classList.remove('d-none');
+                
                 const mt = document.getElementById('modalTitle');
                 const ms = document.getElementById('modalSubtitle');
                 if (mt) mt.textContent = 'Confirm Transaction';
