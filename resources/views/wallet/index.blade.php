@@ -1,15 +1,15 @@
 <x-app-layout>
     <title>Arewa Smart - {{ $title ?? 'Wallet Funding' }}</title>
     
-    <div class="container-fluid px-0 px-lg-3">
-        <div class="row justify-content-center py-3 py-lg-4 g-0 g-lg-3">
+    <div class="container-fluid px-0 px-md-3">
+        <div class="row justify-content-center py-3 py-lg-4 g-0 g-md-4">
             <div class="col-12 col-xl-11 col-xxl-10">
-                <div class="row g-3 g-lg-4 align-items-stretch">
+                <div class="row g-0 g-md-4 align-items-stretch">
                     
                     
                     <!-- Left Part: Marketing & Encouragement -->
-                    <div class="col-12 col-lg-6 order-2 order-lg-1">
-                        <div class="card border-0 rounded-4 overflow-hidden shadow-sm bg-dark text-white hero-card h-100 mx-2 mx-lg-0">
+                    <div class="col-12 col-xl-5 order-2 order-lg-1 mt-2 mt-md-0">
+                        <div class="card border-0 rounded-0 rounded-md-4 overflow-hidden shadow-sm bg-dark text-white hero-card h-100">
                             <div class="card-body p-4 p-md-5 d-flex flex-column justify-content-center">
                                 <h1 class="h2 h1-lg fw-bold mb-3 text-primary">Power Up Your Digital Life</h1>
                                 <p class="lead mb-4 opacity-75 small">
@@ -50,9 +50,9 @@
                     </div>
 
                     <!-- Right Part: Automatic Wallet Funding -->
-                    <div class="col-12 col-lg-6 order-1 order-lg-2">
-                        <div class="card shadow border-0 rounded-4 overflow-hidden h-100 mx-2 mx-lg-0">
-                            <div class="card-header border-0 py-3 bg-gradient text-white">
+                    <div class="col-12 col-xl-7 order-1 order-lg-2">
+                        <div class="card shadow border-0 rounded-0 rounded-md-4 overflow-hidden h-100">
+                            <div class="card-header border-0 py-3 bg-gradient text-white rounded-0 rounded-top-md-4">
                                 <div class="d-flex align-items-center">
                                     <div class="bg-white bg-opacity-25 rounded-circle p-2 me-3">
                                         <i class="bi bi-bank fs-4"></i>
@@ -88,63 +88,51 @@
                                         </div>
                                     @endif
 
-                                    @php
-                                        $ws = \App\Models\Webservice::where('name', 'wallet funding')
-                                              ->where('status', 'active')
-                                              ->first();
-                                    @endphp
-
-                                    @if($ws)
-                                        @if($virtualAccount)
-                                            <div class="bg-light p-3 rounded-4 mb-4">
-                                                <div class="mb-3">
-                                                    <label class="form-label text-uppercase small fw-bold text-muted mb-1">Account Name</label>
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-person text-primary me-2"></i>
-                                                        <span class="fw-bold">{{ $virtualAccount->accountName }}</span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label text-uppercase small fw-bold text-muted mb-1">Account Number</label>
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-hash text-primary me-2"></i>
-                                                        <span class="fw-bold fs-20 text-primary me-2" id="accNo">{{ $virtualAccount->accountNo }}</span>
-                                                        <button class="btn btn-sm btn-link text-primary p-0" type="button" onclick="copyToClipboard('{{ $virtualAccount->accountNo }}')">
-                                                            <i class="bi bi-clipboard"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="mb-0">
-                                                    <label class="form-label text-uppercase small fw-bold text-muted mb-1">Bank Name</label>
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-building text-primary me-2"></i>
-                                                        <span class="fw-bold">{{ $virtualAccount->bankName }}</span>
-                                                    </div>
+                                    @if($virtualAccount)
+                                        <div class="bg-light p-3 rounded-4 mb-4">
+                                            <div class="mb-3">
+                                                <label class="form-label text-uppercase small fw-bold text-muted mb-1">Account Name</label>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-person text-primary me-2"></i>
+                                                    <span class="fw-bold">{{ $virtualAccount->accountName }}</span>
                                                 </div>
                                             </div>
                                             
-                                            <div class="text-center">
-                                                <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill small">
-                                                    <i class="bi bi-clock me-1"></i> Instant delivery 24/7
-                                                </span>
-                                            </div>
-                                        @else
-                                            <div class="text-center py-4">
-                                                <div class="mb-3">
-                                                    <img src="assets/img/apps/thankyou.png" alt="bank" class="img-fluid" style="max-width: 80px;">
+                                            <div class="mb-3">
+                                                <label class="form-label text-uppercase small fw-bold text-muted mb-1">Account Number</label>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-hash text-primary me-2"></i>
+                                                    <span class="fw-bold fs-20 text-primary me-2" id="accNo">{{ $virtualAccount->accountNo }}</span>
+                                                    <button class="btn btn-sm btn-link text-primary p-0" type="button" onclick="copyToClipboard('{{ $virtualAccount->accountNo }}')">
+                                                        <i class="bi bi-clipboard"></i>
+                                                    </button>
                                                 </div>
-                                                <h6 class="fw-bold">No Virtual Account Found</h6>
-                                                <p class="text-muted small mb-4">Generate a dedicated account for instant funding.</p>
-                                                <button type="button" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#virtualAccountModal">
-                                                    <i class="bi bi-plus-circle me-2"></i> Create Account
-                                                </button>
                                             </div>
-                                        @endif
+                                            
+                                            <div class="mb-0">
+                                                <label class="form-label text-uppercase small fw-bold text-muted mb-1">Bank Name</label>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-building text-primary me-2"></i>
+                                                    <span class="fw-bold">{{ $virtualAccount->bankName }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-center">
+                                            <span class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill small">
+                                                <i class="bi bi-clock me-1"></i> Instant delivery 24/7
+                                            </span>
+                                        </div>
                                     @else
-                                        <div class="alert alert-warning border-0 bg-light-warning small">
-                                            <i class="bi bi-exclamation-triangle me-2"></i> Service temporarily unavailable.
+                                        <div class="text-center py-4">
+                                            <div class="mb-3">
+                                                <img src="assets/img/apps/thankyou.png" alt="bank" class="img-fluid" style="max-width: 80px;">
+                                            </div>
+                                            <h6 class="fw-bold">No Virtual Account Found</h6>
+                                            <p class="text-muted small mb-4">Generate a dedicated account for instant funding.</p>
+                                            <button type="button" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#virtualAccountModal">
+                                                <i class="bi bi-plus-circle me-2"></i> Create Account
+                                            </button>
                                         </div>
                                     @endif
                                 </div>

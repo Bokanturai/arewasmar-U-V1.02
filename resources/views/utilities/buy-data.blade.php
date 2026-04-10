@@ -1,12 +1,13 @@
 <x-app-layout>
     <title>Arewa Smart - {{ $title ?? 'Buy Data' }}</title>
 
-    <div class="row">
-        <div class="col-xxl-12 col-xl-12">
-            <div class="row mt-3">
-                <div class="col-xl-6 mb-3">
-                    <div class="card custom-card shadow-sm border-0">
-                        <div class="card-header justify-content-between bg-primary text-white rounded-top">
+    <div class="container-fluid px-0 px-md-3">
+        <div class="row g-0 g-md-4 justify-content-center mt-3">
+            
+            {{-- Left Column: Data Form --}}
+            <div class="col-12 col-xl-5 mb-4">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3 p-md-4 rounded-0 rounded-top-md-4">
                             <div class="card-title fw-semibold">
                                 <i class="bi bi-credit-card me-2"></i> Buy Data
                             </div>
@@ -108,7 +109,11 @@
                     </div>
                 </div>
 
-                {{-- Right Column --}}
+                </div>
+            </div>
+
+            {{-- Right Column: Advert / Information --}}
+            <div class="col-12 col-xl-7 mt-2 mt-md-0">
                 @include('utilities.data-advert')
             </div>
         </div>

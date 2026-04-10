@@ -16,7 +16,30 @@ class TransferController extends Controller
 {
     public function index()
     {
-        return view('transfer.index');
+        $user = Auth::user();
+        
+        // Fetch last distinct P2P recipients from transactions table
+        $recentRecipients = Transaction::where('user_id', $user->id)
+            ->where('type', 'debit')
+            ->where('status', 'completed')
+            ->where('metadata->service', 'P2P')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($trx) {
+                return [
+                    'account_no' => $trx->metadata['receiver_wallet'] ?? '',
+                    'account_name' => $trx->metadata['receiver_name'] ?? 'User',
+                    'bank_name' => 'Arewa Smart User',
+                    'bank_url' => null, // We'll use a default icon in blade
+                    'bank_code' => 'P2P'
+                ];
+            })
+            ->filter(fn($item) => !empty($item['account_no']))
+            ->unique('account_no')
+            ->values()
+            ->take(10);
+
+        return view('transfer.index', compact('recentRecipients'));
     }
 
     public function verifyUser(Request $request)
@@ -30,14 +53,39 @@ class TransferController extends Controller
             'wallet_id' => 'required|string',
         ]);
 
-        $wallet = Wallet::where('wallet_number', $request->wallet_id)->first();
+        $query = $request->wallet_id;
 
-        if ($wallet && $wallet->user) {
-            $user = $wallet->user;
-            $fullName = trim($user->first_name . ' ' . $user->last_name . ' ' . $user->middle_name);
+        // Try Wallet ID first
+        $wallet = Wallet::where('wallet_number', $query)->first();
+        $targetUser = $wallet ? $wallet->user : null;
+
+        if (!$targetUser) {
+            // Try Email or Phone
+            $targetUser = User::where('email', $query)
+                ->orWhere('phone_no', $query)
+                ->first();
+            
+            if ($targetUser) {
+                $wallet = $targetUser->wallet;
+            }
+        }
+
+        if ($targetUser && $wallet) {
+            $fullName = trim($targetUser->first_name . ' ' . $targetUser->last_name . ' ' . $targetUser->middle_name);
+            
+            // Determine photo URL
+            $photoUrl = null;
+            if ($targetUser->photo) {
+                $photoUrl = asset('storage/' . $targetUser->photo);
+            } elseif ($targetUser->profile_photo_url) {
+                $photoUrl = $targetUser->profile_photo_url;
+            }
+
             return response()->json([
                 'success' => true,
-                'user_name' => $fullName
+                'user_name' => $fullName,
+                'wallet_id' => $wallet->wallet_number,
+                'photo' => $photoUrl
             ]);
         }
 

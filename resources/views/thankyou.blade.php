@@ -44,7 +44,7 @@
         $ref = session('ref') ?? 'N/A';
     @endphp
 
-    <div class="container py-3 py-sm-5 d-flex flex-column align-items-center bg-light min-vh-100 px-2 px-md-0">
+    <div class="container-fluid px-0 px-md-3 py-3 py-sm-5 d-flex flex-column align-items-center bg-light min-vh-100">
         <!-- Navigation -->
         <div class="receipt-card mb-3 no-print">
             <a href="{{ route('dashboard') }}" class="text-secondary text-decoration-none small d-flex align-items-center fw-semibold transition-all hover-translate-x">
@@ -53,14 +53,14 @@
         </div>
 
         <!-- Receipt Slip -->
-        <div class="card border-0 shadow-lg rounded-5 overflow-hidden receipt-card mx-auto" id="receipt-capture">
+        <div class="card border-0 shadow-lg rounded-0 rounded-md-4 overflow-hidden receipt-card mx-auto" id="receipt-capture">
             <!-- Header Section -->
-            <div class="card-header bg-white border-0 text-center pt-4 pt-sm-5 pb-3 pb-sm-4">
+            <div class="card-header bg-white border-0 text-center pt-4 pt-sm-5 pb-3 pb-sm-4 rounded-0 rounded-top-md-4">
                 <div class="success-icon-bg rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 70px; height: 70px;">
                     <i class="bi bi-check2-circle text-success fs-1"></i>
                 </div>
                 <h6 class="text-success fw-bold text-uppercase ls-wide mb-1" style="font-size: 0.7rem;">Transaction Successful</h6>
-                <h4 class="fw-extrabold text-dark mb-1 fs-5 fs-sm-4">Arewa Smart Idea</h4>
+                <h4 class="fw-extrabold text-primary mb-1 fs-15 fs-sm-4">Arewa Smart Idea</h4>
                 <p class="text-muted small mb-0 font-monospace" style="font-size: 0.75rem;">Ref: #{{ $ref }}</p>
             </div>
 

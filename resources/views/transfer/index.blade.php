@@ -1,16 +1,15 @@
 <x-app-layout>
     <title>Arewa Smart - {{ $title ?? 'Transfer to Smart User' }}</title>
 
-    <div class="container-fluid px-0 px-lg-3">
-        <div class="row justify-content-center py-3 py-lg-4 g-0 g-lg-3">
+    <div class="container-fluid px-0 px-md-3">
+        <div class="row justify-content-center py-3 py-lg-4 g-0 g-md-4">
             <div class="col-12 col-xl-11 col-xxl-10">
-                <div class="row g-3 g-lg-4 mt-0">
+                <div class="row g-0 g-md-4 align-items-stretch">
                     
                     {{-- Transfer Form Column --}}
-                    <div class="col-12 col-lg-6 col-xl-6">
-                        <div class="card shadow-lg border-0 rounded-4 h-100 mx-2 mx-lg-0">
-                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3 p-md-4" 
-                                 style="background: primary">
+                    <div class="col-12 col-xl-5 mb-4">
+                        <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3 p-md-4 rounded-0 rounded-top-md-4">
                                 <h5 class="mb-0 fw-bold fs-12 fs-md-5"><i class="bi bi-send me-2"></i>Transfer Funds</h5>
                                 <span class="badge bg-white text-primary fw-bold px-2 px-md-3 py-2 rounded-pill">P2P</span>
                             </div>
@@ -22,7 +21,7 @@
                                         <i class="bi bi-wallet2 fs-15"></i>
                                     </div>
                                     <h6 class="fw-bold small">Send Money Instantly</h6>
-                                    <p class="text-muted small">Enter the recipient's Wallet ID below.</p>
+                                    <p class="text-muted small px-3">Enter the recipient's Wallet ID, Phone, or Email.</p>
                                 </div>
 
                                 {{-- Flash Messages --}}
@@ -55,26 +54,44 @@
                                 <form id="transferForm" method="POST" action="{{ route('transfer.process') }}">
                                     @csrf
 
-                                    {{-- Wallet ID --}}
+                                    {{-- Wallet ID / Email / Phone --}}
                                     <div class="mb-3 mb-md-4 text-start">
-                                        <label class="form-label fw-semibold text-dark small text-uppercase">Recipient Wallet ID</label>
+                                        <label class="form-label fw-semibold text-dark small text-uppercase">Recipient Identifier</label>
                                         <div class="d-flex flex-column flex-sm-row gap-2">
                                             <div class="flex-grow-1">
                                                 <div class="input-group">
                                                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-person-badge text-muted"></i></span>
                                                     <input type="text" id="wallet_id" name="wallet_id"
                                                            class="form-control border-start-0 ps-0"
-                                                           placeholder="e.g. WAL-123456"
+                                                           placeholder="Wallet ID, Email, or Phone"
                                                            required>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-primary px-3" type="button" id="verifyBtn" onclick="verifyUser()" style="white-space: nowrap;">
+                                            <button class="btn btn-primary px-4" type="button" id="verifyBtn" onclick="verifyUser()" style="white-space: nowrap;">
                                                 Verify
                                             </button>
                                         </div>
-                                        <div class="d-flex flex-column mt-2" style="min-height: 40px;">
-                                            <small id="userNameDisplay" class="text-success fw-bold"></small>
-                                            <small id="userErrorDisplay" class="text-danger fw-bold"></small>
+                                        
+                                        {{-- Recipient Info Card (Photo + Name) --}}
+                                        <div id="verifiedUserCard" class="d-none mt-3 p-3 bg-light rounded-4 border border-primary border-opacity-10">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-wrapper me-3">
+                                                    <img id="recipientPhoto" src="{{ asset('assets/img/avatars/1.png') }}" alt="User" class="rounded-circle border" style="width: 50px; height: 50px; object-fit: cover;">
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 id="recipientName" class="mb-0 fw-bold small text-dark"></h6>
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="badge bg-success bg-opacity-10 text-success p-1 rounded-circle me-1" style="font-size: 8px;">
+                                                            <i class="bi bi-check-lg"></i>
+                                                        </span>
+                                                        <small class="text-muted small" style="font-size: 10px;">Verified Arewa Smart User</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            <small id="userErrorDisplay" class="text-danger fw-bold small"></small>
                                         </div>
                                     </div>
 
@@ -103,15 +120,14 @@
                                         <label class="form-label fw-semibold text-dark small text-uppercase">Description (Optional)</label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-light border-end-0"><i class="bi bi-card-text text-muted"></i></span>
-                                            <textarea name="description" class="form-control border-start-0 ps-0" rows="2" placeholder="What is this for?"></textarea>
+                                            <textarea id="description" name="description" class="form-control border-start-0 ps-0" rows="2" placeholder="What is this for?"></textarea>
                                         </div>
                                     </div>
 
                                     {{-- Submit --}}
                                     <div class="d-grid mt-3 mt-md-4">
                                         <button type="button" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-2 py-md-3"
-                                                id="proceedBtn" disabled
-                                                data-bs-toggle="modal" data-bs-target="#pinModal">
+                                                id="proceedBtn" disabled>
                                             Proceed to Transfer <i class="bi bi-arrow-right ms-2"></i>
                                         </button>
                                     </div>
@@ -120,126 +136,100 @@
                         </div>
                     </div>
 
-                    {{-- Advert Column --}}
-                    <div class="col-12 col-lg-6 col-xl-6">
-                        <div class="card border-0 rounded-4 overflow-hidden shadow-sm bg-dark text-white hero-card h-100 mx-2 mx-lg-0">
-                            <div class="card-body p-3 p-md-5 d-flex flex-column justify-content-center">
-                                <h2 class="h3 h2-lg fw-bold mb-3 text-primary">Send Money Instantly</h2>
-                                <p class="lead mb-4 opacity-75 small">
-                                    Transfer funds to any Arewa Smart user with zero stress. 
-                                    Fast, secure, and reliable peer-to-peer transfers at your fingertips.
-                                </p>
-                                
-                                <div class="mt-auto">
-                                    <div class="d-flex flex-column gap-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-primary bg-opacity-25 rounded-circle p-2 me-3">
-                                                <i class="bi bi-lightning-charge-fill text-primary"></i>
-                                            </div>
-                                            <span class="fw-semibold small">Instant Transfer</span>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-success bg-opacity-25 rounded-circle p-2 me-3">
-                                                <i class="bi bi-shield-check text-success"></i>
-                                            </div>
-                                            <span class="fw-semibold small">Secure & Encrypted</span>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-info bg-opacity-25 rounded-circle p-2 me-3">
-                                                <i class="bi bi-clock-history text-info"></i>
-                                            </div>
-                                            <span class="fw-semibold small">24/7 Availability</span>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-warning bg-opacity-25 rounded-circle p-2 me-3">
-                                                <i class="bi bi-currency-exchange text-warning"></i>
-                                            </div>
-                                            <span class="fw-semibold small">No Hidden Fees</span>
-                                        </div>
-                                    </div>
+                    {{-- Recent Recipients Column --}}
+                    <div class="col-12 col-xl-7 mt-2 mt-md-0">
+                        <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
+                            {{-- Header --}}
+                            <div class="card-header bg-white p-3 p-md-4 border-bottom d-flex align-items-center rounded-0 rounded-top-md-4">
+                                <i class="bi bi-clock-history text-primary me-2 fs-15"></i>
+                                <div>
+                                    <h5 class="mb-0 fw-bold text-dark fs-15">Recent Recipients</h5>
+                                    <p class="text-muted small mb-0">Tap a recipient to auto-fill the form</p>
                                 </div>
+                            </div>
 
-                                <div class="mt-5 d-none d-lg-block">
-                                    <div class="opacity-25 text-end">
-                                        <i class="bi bi-send display-1"></i>
+                            <div class="card-body p-3 p-md-4" id="recentRecipientsBody">
+                                @if(isset($recentRecipients) && count($recentRecipients) > 0)
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach($recentRecipients as $recipient)
+                                            <div class="d-flex align-items-center p-3 rounded-4 bg-light border-0 shadow-sm recipeint-item"
+                                                 style="cursor:pointer; transition:all .2s;"
+                                                 onclick="selectRecentBank('{{ $recipient['bank_code'] }}', '{{ $recipient['account_no'] }}', '{{ $recipient['account_name'] }}')">
+
+                                                <div class="bg-white rounded-circle shadow-sm me-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                     style="width:42px;height:42px;border:1px solid rgba(0,0,0,.08);">
+                                                    @if(!empty($recipient['bank_url']))
+                                                        <img src="{{ $recipient['bank_url'] }}" alt="{{ $recipient['bank_name'] }}"
+                                                             style="width:26px;height:26px;object-fit:contain;"
+                                                             onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                                                        <i class="bi bi-person-fill text-primary" style="display:none;"></i>
+                                                    @else
+                                                        <i class="bi bi-person-fill text-primary"></i>
+                                                    @endif
+                                                </div>
+
+                                                <div class="flex-grow-1 min-w-0">
+                                                    <span class="fw-bold d-block small text-truncate text-dark">{{ $recipient['account_name'] }}</span>
+                                                    <small class="text-muted text-truncate d-block" style="font-size: 11px;">
+                                                        {{ $recipient['bank_name'] }} &bull; {{ $recipient['account_no'] }}
+                                                    </small>
+                                                </div>
+
+                                                <i class="bi bi-chevron-right text-muted small ms-2 flex-shrink-0"></i>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                </div>
+                                @else
+                                    <div class="text-center py-5 text-muted">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style="width:64px;height:64px;">
+                                            <i class="bi bi-people fs-2 text-muted opacity-50"></i>
+                                        </div>
+                                        <h6 class="fw-semibold">No Recent Transfers</h6>
+                                        <p class="small text-muted mb-0 px-4">
+                                            Your trusted recipients will appear here after your first successful transfer.
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="card-footer bg-white border-top text-center py-3 rounded-0 rounded-bottom-md-4">
+                                <small class="text-muted d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-patch-check-fill text-primary"></i>
+                                    Protected by Arewa Smart Multi-Factor Authentication
+                                </small>
                             </div>
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
-    </div>
+                </div>{{-- /row-inner --}}
+            </div>{{-- /col-inner --}}
+        </div>{{-- /row-outer --}}
+    </div>{{-- /container --}}
 
-    {{-- PIN Confirmation Modal --}}
-    <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered mx-2 mx-lg-auto">
-            <div class="modal-content rounded-4 shadow-lg border-0">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-semibold small" id="pinModalLabel">
-                        <i class="bi bi-shield-lock-fill me-2"></i> Enter Transaction PIN
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body text-center py-3 py-md-4">
-                    <p class="text-muted mb-3 small">
-                        For your security, please confirm your <strong>5-digit transaction PIN</strong>.
-                    </p>
-
-                    <div class="d-flex justify-content-center px-3">
-                        <input 
-                            type="password" 
-                            name="pin" 
-                            id="pinInput" 
-                            class="form-control text-center fw-bold fs-3 py-3 border-2 border-primary rounded-pill shadow-sm w-100" 
-                            maxlength="5" 
-                            inputmode="numeric" 
-                            placeholder="•••••"
-                            required
-                            style="letter-spacing: 8px; font-family: 'Courier New', monospace;"
-                        >
-                    </div>
-
-                    <small id="pinError" class="text-danger d-none mt-3 d-block fw-semibold small">
-                        Incorrect PIN. Please try again.
-                    </small>
-                </div>
-
-                <div class="modal-footer border-0 justify-content-center pb-3 pb-md-4 gap-2">
-                    <button type="button" class="btn btn-light px-3 px-md-4 rounded-pill small" data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-
-                    <button type="button" id="confirmPinBtn" class="btn btn-primary px-3 px-md-4 rounded-pill fw-semibold small">
-                        <span class="spinner-border spinner-border-sm me-2 d-none" id="pinLoader" role="status" aria-hidden="true"></span>
-                        <span id="confirmPinText">Confirm</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{-- PIN Modal --}}
+    @include('pages.pin')
 
     <script>
+        let verifiedRecipient = null;
+
         function verifyUser() {
             const walletId = document.getElementById('wallet_id').value;
-            const userNameDisplay = document.getElementById('userNameDisplay');
             const userErrorDisplay = document.getElementById('userErrorDisplay');
+            const verifiedUserCard = document.getElementById('verifiedUserCard');
+            const recipientName = document.getElementById('recipientName');
+            const recipientPhoto = document.getElementById('recipientPhoto');
             const proceedBtn = document.getElementById('proceedBtn');
             const verifyBtn = document.getElementById('verifyBtn');
 
             if (!walletId) {
-                userErrorDisplay.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Please enter a Wallet ID.';
-                userNameDisplay.innerHTML = "";
+                userErrorDisplay.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Please enter a Wallet ID, Phone, or Email.';
+                verifiedUserCard.classList.add('d-none');
                 return;
             }
 
             // UI Feedback
-            userNameDisplay.innerHTML = "";
             userErrorDisplay.innerHTML = "";
-            verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verifying...';
+            verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
             verifyBtn.disabled = true;
 
             fetch("{{ route('transfer.verify') }}", {
@@ -256,13 +246,20 @@
                 verifyBtn.disabled = false;
 
                 if (data.success) {
-                    userNameDisplay.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> ' + data.user_name;
+                    verifiedRecipient = data;
+                    recipientName.textContent = data.user_name;
+                    recipientPhoto.src = data.photo || "{{ asset('assets/img/avatars/1.png') }}";
+                    verifiedUserCard.classList.remove('d-none');
                     userErrorDisplay.innerHTML = "";
                     proceedBtn.disabled = false;
+                    
+                    // If the user used email/phone, update the field to the canonical Wallet ID
+                    document.getElementById('wallet_id').value = data.wallet_id;
                 } else {
                     userErrorDisplay.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> User not found.';
-                    userNameDisplay.innerHTML = "";
+                    verifiedUserCard.classList.add('d-none');
                     proceedBtn.disabled = true;
+                    verifiedRecipient = null;
                 }
             })
             .catch(err => {
@@ -270,20 +267,65 @@
                 verifyBtn.innerHTML = 'Verify';
                 verifyBtn.disabled = false;
                 userErrorDisplay.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Verification failed.';
-                userNameDisplay.innerHTML = "";
+                verifiedUserCard.classList.add('d-none');
                 proceedBtn.disabled = true;
             });
         }
 
+        // Logic for Proceed Button (Populate Modal & Show)
+        document.getElementById('proceedBtn').addEventListener('click', function() {
+            const amount = document.getElementById('amount').value;
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount.');
+                return;
+            }
+
+            if (!verifiedRecipient) {
+                alert('Please verify the recipient first.');
+                return;
+            }
+
+            // Populate Modal Fields (from pages.pin)
+            document.getElementById('confirmAccountName').textContent = verifiedRecipient.user_name;
+            document.getElementById('confirmBankName').textContent = 'Arewa Smart Wallet';
+            document.getElementById('confirmAccountNo').textContent = verifiedRecipient.wallet_id;
+            document.getElementById('confirmAmount').textContent = '₦' + parseFloat(amount).toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // Show Modal
+            const pinModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('pinModal'));
+            pinModal.show();
+        });
+
+        // Modal Step Navigation (Summary -> PIN)
+        const btnGoToPin = document.getElementById('btnGoToPin');
+        if (btnGoToPin) {
+            btnGoToPin.addEventListener('click', () => {
+                const confStep = document.getElementById('confirmationStep');
+                const pinStep = document.getElementById('pinStep');
+                if (confStep) confStep.classList.add('d-none');
+                if (pinStep) pinStep.classList.remove('d-none');
+                
+                // Update headers if they exist
+                const mt = document.getElementById('modalTitle');
+                const ms = document.getElementById('modalSubtitle');
+                if (mt) mt.textContent = 'Authorize Payout';
+                if (ms) ms.textContent = 'Step 2 of 2 — Security PIN';
+                
+                setTimeout(() => document.getElementById('pinInput')?.focus(), 100);
+            });
+        }
+
+        // PIN Confirmation Logic
         document.getElementById('confirmPinBtn').addEventListener('click', function() {
             const confirmBtn = this;
             const loader = document.getElementById('pinLoader');
             const confirmText = document.getElementById('confirmPinText');
             const pinError = document.getElementById('pinError');
+            const pinErrorText = document.getElementById('pinErrorText');
             const pin = document.getElementById('pinInput').value.trim();
 
             if (!pin || pin.length !== 5) {
-                pinError.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Please enter a valid 5-digit PIN.';
+                pinErrorText.textContent = 'Please enter a valid 5-digit PIN.';
                 pinError.classList.remove('d-none');
                 return;
             }
@@ -307,19 +349,19 @@
                 if (data.valid) {
                     // Append PIN to the form and submit
                     const form = document.getElementById('transferForm');
-                    const pinInput = document.createElement('input');
-                    pinInput.type = 'hidden';
-                    pinInput.name = 'pin';
-                    pinInput.value = pin;
-                    form.appendChild(pinInput);
+                    const pinHiddenInput = document.createElement('input');
+                    pinHiddenInput.type = 'hidden';
+                    pinHiddenInput.name = 'pin';
+                    pinHiddenInput.value = pin;
+                    form.appendChild(pinHiddenInput);
                     
                     form.submit();
                 } else {
-                    pinError.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> Incorrect PIN. Please try again.';
+                    pinErrorText.textContent = 'Incorrect PIN. Please try again.';
                     pinError.classList.remove('d-none');
                     confirmBtn.disabled = false;
                     loader.classList.add('d-none');
-                    confirmText.textContent = "Confirm";
+                    confirmText.textContent = "Authorize Now";
                     
                     // Clear input
                     document.getElementById('pinInput').value = '';
@@ -328,23 +370,12 @@
             })
             .catch(err => {
                 console.error("PIN check failed:", err);
-                pinError.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Network error. Please try again.';
+                pinErrorText.textContent = 'Network error. Please try again.';
                 pinError.classList.remove('d-none');
                 confirmBtn.disabled = false;
                 loader.classList.add('d-none');
-                confirmText.textContent = "Confirm";
+                confirmText.textContent = "Authorize Now";
             });
-        });
-
-        // Auto-focus PIN input when modal opens
-        document.getElementById('pinModal').addEventListener('shown.bs.modal', function () {
-            document.getElementById('pinInput').focus();
-        });
-
-        // Clear PIN input when modal closes
-        document.getElementById('pinModal').addEventListener('hidden.bs.modal', function () {
-            document.getElementById('pinInput').value = '';
-            document.getElementById('pinError').classList.add('d-none');
         });
     </script>
 </x-app-layout>

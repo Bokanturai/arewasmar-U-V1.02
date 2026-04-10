@@ -39,9 +39,37 @@ class AirtimeController extends Controller
             ['balance' => 0.00, 'status' => 'active']
         );
 
+        // Fetch recent airtime recipients from reports
+        $recentRecipients = \App\Models\Report::where('user_id', $user->id)
+            ->where('type', 'airtime')
+            ->where('status', 'successful')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($report) {
+                $network = strtolower($report->network);
+                $img = 'default.png';
+                if (str_contains($network, 'mtn')) $img = 'mtn.jpg';
+                elseif (str_contains($network, 'airtel')) $img = 'Airtel.png';
+                elseif (str_contains($network, 'glo')) $img = 'glo.jpg';
+                elseif (str_contains($network, 'etisalat') || str_contains($network, '9mobile')) $img = '9Mobile.jpg';
+
+                return [
+                    'account_no' => $report->phone_number,
+                    'account_name' => $report->phone_number,
+                    'bank_name' => strtoupper($report->network),
+                    'bank_code' => $report->network,
+                    'bank_url' => asset('assets/img/apps/' . $img)
+                ];
+            })
+            ->filter(fn($item) => !empty($item['account_no']))
+            ->unique('account_no')
+            ->values()
+            ->take(10);
+
         return view('utilities.index', [
-            'user'   => $user,
-            'wallet' => $wallet,
+            'user'             => $user,
+            'wallet'           => $wallet,
+            'recentRecipients' => $recentRecipients
         ]);
     }
 
@@ -200,7 +228,8 @@ class AirtimeController extends Controller
                     'ref'     => $requestId,
                     'mobile'  => $mobile,
                     'amount'  => $amount,
-                    'paid'    => $payableAmount
+                    'paid'    => $payableAmount,
+                    'network' => $networkKey
                 ]);
             }
 

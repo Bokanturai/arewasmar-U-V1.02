@@ -25,52 +25,56 @@
     </style>
     @endpush
 
-    <div class="row">
-        <div class="col-xxl-12 col-xl-12">
-            <div class="row mt-3">
+    <div class="container-fluid px-0 px-md-3">
+        <div class="row g-0 g-md-4 justify-content-center mt-3">
+            
+            {{-- Left Column: Airtime Form --}}
+            <div class="col-12 col-xl-5 mb-4">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
 
-                @php
-                    $ws = \App\Models\Webservice::where('name', 'wallet funding')
-                        ->where('status', 'active')
-                        ->first();
-                @endphp
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center p-3 p-md-4 rounded-0 rounded-top-md-4">
+                        <div class="card-title fw-bold mb-0 fs-12 fs-md-5">
+                            <i class="bi bi-phone me-2"></i> Buy Airtime
+                        </div>
+                        <span class="badge bg-white text-primary fw-bold px-2 px-md-3 py-2 rounded-pill">Top-up</span>
+                    </div>
 
-                @if ($ws)
-                    {{-- Left Column: Airtime Form --}}
-                    <div class="col-xl-6 mb-3">
-                        <div class="card custom-card shadow-sm border-0">
-
-                            <div class="card-header justify-content-between bg-primary text-white rounded-top">
-                                <div class="card-title fw-semibold">
-                                    <i class="bi bi-phone me-2"></i> Buy Airtime
+                    <div class="card-body p-3 p-md-4">
+                        {{-- Alerts --}}
+                        <div class="mb-4">
+                            @if (session('success'))
+                                <div class="alert alert-success alert-dismissible fade show text-center rounded-3 border-0 shadow-sm small py-2">
+                                    <i class="bi bi-check-circle-fill me-2"></i> {!! session('success') !!}
+                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
                                 </div>
-                            </div>
+                            @endif
 
-                            <div class="card-body">
+                            @if (session('error'))
+                                <div class="alert alert-danger alert-dismissible fade show text-center rounded-3 border-0 shadow-sm small py-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                                </div>
+                            @endif
 
-                                {{-- Alerts --}}
-                                <div class="mb-4">
-                                    @if (session('success'))
-                                        <div class="alert alert-success alert-dismissible fade show text-center">
-                                            {!! session('success') !!}
-                                        </div>
-                                    @endif
+                            @if ($errors->any())
+                                <div class="alert alert-danger alert-dismissible fade show rounded-3 border-0 shadow-sm small py-2">
+                                    <ul class="mb-0 text-start small list-unstyled">
+                                        @foreach ($errors->all() as $error)
+                                            <li><i class="bi bi-dot me-1"></i>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                                </div>
+                            @endif
+                        </div>
 
-                                    @if (session('error'))
-                                        <div class="alert alert-danger alert-dismissible fade show text-center">
-                                            {{ session('error') }}
-                                        </div>
-                                    @endif
-
-                                    @if ($errors->any())
-                                        <div class="alert alert-danger alert-dismissible fade show">
-                                            <ul class="mb-0 ps-3 small">
-                                                @foreach ($errors->all() as $error)
-                                                    <li>{{ $error }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @endif
+                                <div class="text-center mb-3 mb-md-4">
+                                    <div class="avatar-wrapper bg-primary bg-opacity-10 text-primary rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px;">
+                                        <i class="bi bi-broadcast fs-15"></i>
+                                    </div>
+                                    <h6 class="fw-bold small">Instant Airtime Top-up</h6>
+                                    <p class="text-muted small px-3">Top up any network instantly with zero hidden fees.</p>
                                 </div>
 
                                 {{-- Airtime Form --}}
@@ -78,10 +82,30 @@
                                     @csrf
                                     <input type="hidden" id="selectedNetwork" name="network" value="{{ old('network') }}">
 
+                                    {{-- Phone Number --}}
+                                    <div class="mb-3 mb-md-4">
+                                        <label for="mobileno" class="form-label text-dark small mb-1">Recipient phone number</label>
+                                        <div class="input-group shadow-sm">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="bi bi-telephone text-muted"></i>
+                                            </span>
+                                            <input type="tel"
+                                                   id="mobileno"
+                                                   name="mobileno"
+                                                   value="{{ old('mobileno') }}"
+                                                   class="form-control border-start-0 ps-0 text-center text-dark"
+                                                   maxlength="11"
+                                                   pattern="\d{11}"
+                                                   placeholder="080 0000 0000"
+                                                   required>
+                                        </div>
+                                        <div id="networkResult" class="mt-2 small-note text-center fw-bold text-primary" style="min-height: 1.2em;"></div>
+                                    </div>
+
                                     {{-- Network Selection --}}
-                                    <div class="network-selection mb-4">
-                                        <h6 class="text-center mb-3 fw-semibold">Select Network Provider</h6>
-                                        <div class="row text-center g-2 g-sm-3">
+                                    <div class="network-selection mb-3 mb-md-4">
+                                        <label class="form-label fw-semibold text-dark small mb-2 text-center d-block w-100">Select network operator</label>
+                                        <div class="row text-center g-2 g-sm-3 justify-content-center">
                                             @php
                                                 $networks = [
                                                     'mtn'      => ['name' => 'MTN',    'img' => 'mtn.jpg'],
@@ -93,16 +117,15 @@
 
                                             @foreach ($networks as $key => $network)
                                                 <div class="col-3">
-                                                    <div class="network-option d-flex flex-column align-items-center p-2 p-sm-3"
+                                                    <div class="network-option d-flex flex-column align-items-center p-2 rounded-4 border border-light shadow-sm"
                                                          data-network="{{ $key }}"
-                                                         title="{{ $network['name'] }}">
+                                                         style="cursor: pointer; transition: all 0.2s;">
                                                         <img src="{{ asset('assets/img/apps/' . $network['img']) }}"
                                                              alt="{{ $network['name'] }}"
-                                                             class="rounded-circle mb-2 shadow-sm img-fluid"
-                                                             style="width: 100%; max-width: 50px; height: auto; aspect-ratio: 1/1; object-fit: contain;"
-                                                             loading="lazy"
+                                                             class="rounded-circle mb-1 shadow-sm"
+                                                             style="width: 38px; height: 38px; object-fit: contain;"
                                                              onerror="this.src='{{ asset('assets/img/apps/default.png') }}'">
-                                                        <div class="small fw-semibold text-truncate w-100">
+                                                        <div class="small fw-bold text-dark" style="font-size: 10px;">
                                                             {{ $network['name'] }}
                                                         </div>
                                                     </div>
@@ -111,60 +134,33 @@
                                         </div>
                                     </div>
 
-                                    {{-- Phone Number --}}
-                                    <div class="mb-3">
-                                        <label for="mobileno" class="form-label fw-semibold">Phone Number</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">
-                                                <i class="bi bi-telephone-fill"></i>
-                                            </span>
-                                            <input type="tel"
-                                                   id="mobileno"
-                                                   name="mobileno"
-                                                   value="{{ old('mobileno') }}"
-                                                   class="form-control text-center"
-                                                   maxlength="11"
-                                                   pattern="\d{11}"
-                                                   placeholder="Enter 11-digit phone number"
-                                                   required>
-                                        </div>
-                                        <div id="networkResult" class="mt-1 small-note text-center fw-bold text-primary"></div>
-                                    </div>
-
                                     {{-- Amount --}}
-                                    <div class="mb-4">
-                                        <label for="amount" class="form-label d-flex justify-content-between align-items-center fw-semibold">
+                                    <div class="mb-3 mb-md-4">
+                                        <label for="amount" class="form-label d-flex justify-content-between align-items-center fw-semibold text-dark small mb-2">
                                             <span>Amount</span>
-                                            <small class="text-muted">
-                                                Balance:
-                                                <strong class="text-success">
-                                                    ₦{{ number_format($wallet->balance ?? 0, 2) }}
-                                                </strong>
-                                            </small>
+                                            <small class="text-muted fw-normal">Bal: <strong class="text-success">₦{{ number_format($wallet->balance ?? 0, 2) }}</strong></small>
                                         </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light fw-bold text-secondary">₦</span>
+                                        <div class="input-group shadow-sm">
+                                            <span class="input-group-text bg-light border-end-0 fw-bold text-secondary">₦</span>
                                             <input type="number"
                                                    id="amount"
                                                    name="amount"
                                                    value="{{ old('amount') }}"
-                                                   class="form-control form-control-lg text-center"
+                                                   class="form-control border-start-0 ps-0 text-center fw-bold text-dark fs-15"
                                                    min="50"
-                                                   max="10000"
-                                                   placeholder="e.g., 500"
+                                                   max="50000"
+                                                   placeholder="0.00"
                                                    required>
                                         </div>
-                                    </div>
 
-                                    {{-- Quick Amount Suggestions --}}
-                                    <div class="amount-suggestions mb-4">
-                                        <p class="text-center text-muted small mb-2">Or select a quick amount</p>
-                                        <div class="row g-2">
-                                            @php $amounts = [100, 200, 500, 1000, 2000, 5000]; @endphp
+                                        {{-- Quick Amount Suggestions --}}
+                                        <div class="row g-2 mt-2">
+                                            @php $amounts = [100, 200, 500, 1000, 2000]; @endphp
                                             @foreach ($amounts as $amt)
-                                                <div class="col">
+                                                <div class="col px-1">
                                                     <button type="button"
-                                                            class="btn btn-outline-secondary w-100 amount-btn btn-sm"
+                                                            class="btn btn-light w-100 amount-btn btn-sm fw-bold border-0 shadow-sm text-muted rounded-pill py-1"
+                                                            style="font-size: 10px;"
                                                             data-amount="{{ $amt }}">
                                                         ₦{{ number_format($amt) }}
                                                     </button>
@@ -174,74 +170,100 @@
                                     </div>
 
                                     {{-- Submit Button --}}
-                                    <div class="d-grid">
-                                        <button type="button" id="buy-airtime" class="btn btn-primary btn-lg fw-semibold">
-                                            <i class="bi bi-lightning-charge me-2"></i> Buy Now
+                                    <div class="d-grid mt-4">
+                                        <button type="button" id="buy-airtime" class="btn btn-primary btn-lg fw-bold rounded-pill shadow-lg py-2 py-md-3">
+                                            <i class="bi bi-lightning-charge-fill me-2"></i> Purchase Now
                                         </button>
                                     </div>
                                 </form>
+                            </div>
 
-                            </div>{{-- /.card-body --}}
-                        </div>{{-- /.card --}}
-                    </div>{{-- /.col-xl-6 --}}
-                @endif
-
-                {{-- Right Column: Advert --}}
-                @include('utilities.advert')
-
-            </div>{{-- /.row --}}
-        </div>
-    </div>
-
-    {{-- PIN Confirmation Modal --}}
-    <div class="modal fade" id="pinModal" tabindex="-1" aria-labelledby="pinModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow-lg border-0">
-
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-semibold" id="pinModalLabel">
-                        <i class="bi bi-shield-lock-fill me-2"></i> Confirm Transaction PIN
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body text-center py-4">
-                    <p class="text-muted mb-3 small">
-                        Please enter your <strong>5-digit PIN</strong> to confirm this transaction.
-                    </p>
-                    <div class="d-flex justify-content-center">
-                        <input type="password"
-                               name="pin"
-                               id="pinInput"
-                               class="form-control text-center fw-bold fs-3 py-3 border-2 border-primary rounded-pill shadow-sm w-50"
-                               maxlength="5"
-                               inputmode="numeric"
-                               placeholder="•••••"
-                               required
-                               style="letter-spacing: 10px; font-family: 'Courier New', monospace;">
+                    <div class="card-footer bg-white border-top text-center py-3 rounded-0 rounded-bottom-md-4">
+                        <small class="text-muted d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-shield-lock-fill text-primary"></i>
+                            Secure 256-bit Encrypted Transaction
+                        </small>
                     </div>
-                    <small id="pinError" class="text-danger d-none mt-2 d-block fw-semibold">
-                        Incorrect PIN. Please try again.
-                    </small>
                 </div>
+            </div>
 
-                <div class="modal-footer border-0 justify-content-center pb-4">
-                    <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="button" id="confirmPinBtn" class="btn btn-primary px-4 rounded-pill fw-semibold">
-                        Confirm & Proceed
-                    </button>
-                </div>
+            {{-- Recent Recipients Column --}}
+            <div class="col-12 col-xl-7 mt-2 mt-md-0">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
+                            {{-- Header --}}
+                            <div class="card-header bg-white p-3 p-md-4 border-bottom d-flex align-items-center rounded-0 rounded-top-md-4">
+                                <i class="bi bi-clock-history text-primary me-2 fs-15"></i>
+                                <div>
+                                    <h5 class="mb-0 fw-bold text-dark fs-15">Recent Recipients</h5>
+                                    <p class="text-muted small mb-0">Tap a recipient to auto-fill the form</p>
+                                </div>
+                            </div>
 
-            </div>{{-- /.modal-content --}}
-        </div>{{-- /.modal-dialog --}}
-    </div>{{-- /#pinModal --}}
+                            <div class="card-body p-3 p-md-4" id="recentRecipientsBody">
+                                @if(isset($recentRecipients) && count($recentRecipients) > 0)
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach($recentRecipients as $recipient)
+                                            <div class="d-flex align-items-center p-3 rounded-4 bg-light border-0 shadow-sm recipient-item"
+                                                 style="cursor:pointer; transition:all .2s;"
+                                                 onclick="selectRecentRecipient('{{ $recipient['account_no'] }}', '{{ $recipient['bank_code'] }}')">
 
+                                                <div class="bg-white rounded-circle shadow-sm me-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                                     style="width:42px;height:42px;border:1px solid rgba(0,0,0,.08);">
+                                                    @if(!empty($recipient['bank_url']))
+                                                        <img src="{{ $recipient['bank_url'] }}" alt="{{ $recipient['bank_name'] }}"
+                                                             style="width:26px;height:26px;object-fit:contain;"
+                                                             onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                                                        <i class="bi bi-phone-fill text-primary" style="display:none;"></i>
+                                                    @else
+                                                        <i class="bi bi-phone-fill text-primary"></i>
+                                                    @endif
+                                                </div>
+
+                                                <div class="flex-grow-1 min-w-0">
+                                                    <span class="fw-bold d-block small text-truncate text-dark">{{ $recipient['account_no'] }}</span>
+                                                    <small class="text-muted text-truncate d-block" style="font-size: 11px;">
+                                                        Network: {{ $recipient['bank_name'] }}
+                                                    </small>
+                                                </div>
+
+                                                <i class="bi bi-chevron-right text-muted small ms-2 flex-shrink-0"></i>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="text-center py-5 text-muted">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style="width:64px;height:64px;">
+                                            <i class="bi bi-people fs-2 text-muted opacity-50"></i>
+                                        </div>
+                                        <h6 class="fw-semibold">No Recent Transfers</h6>
+                                        <p class="small text-muted mb-0 px-4">
+                                            Your trusted recipients will appear here after your first successful transfer.
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="card-footer bg-white border-top text-center py-3 rounded-0 rounded-bottom-md-4">
+                                <small class="text-muted d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-patch-check-fill text-primary"></i>
+                                    Protected by Arewa Smart Multi-Factor Authentication
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>{{-- /row-inner --}}
+            </div>{{-- /col-inner --}}
+        </div>{{-- /row-outer --}}
+    </div>{{-- /container --}}
+
+    {{-- PIN Modal --}}
+    @include('pages.pin')
+
+    
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
             const networkOptions      = document.querySelectorAll('.network-option');
             const selectedNetworkInput = document.getElementById('selectedNetwork');
             const amountInput         = document.getElementById('amount');
@@ -249,7 +271,6 @@
             const phoneInput          = document.getElementById('mobileno');
             const networkResultDiv    = document.getElementById('networkResult');
             const buyButton           = document.getElementById('buy-airtime');
-            const confirmButton       = document.getElementById('confirmPinBtn');
 
             // --- Network selection ---
             networkOptions.forEach(option => {
@@ -257,6 +278,10 @@
                     networkOptions.forEach(opt => opt.classList.remove('active'));
                     this.classList.add('active');
                     selectedNetworkInput.value = this.dataset.network;
+                    
+                    // Add visual feedback
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => this.style.transform = 'scale(1)', 100);
                 });
             });
 
@@ -264,10 +289,12 @@
             amountButtons.forEach(button => {
                 button.addEventListener('click', function () {
                     amountInput.value = this.dataset.amount;
+                    amountInput.classList.add('is-valid');
+                    setTimeout(() => amountInput.classList.remove('is-valid'), 500);
                 });
             });
 
-            // --- Auto network detection by phone prefix ---
+            // --- Auto network detection ---
             const networkPrefixes = {
                 'mtn':      ['0803','0806','0703','0706','0810','0813','0814','0816','0903','0906','0913','0916','07025','07026','0704','09065'],
                 'glo':      ['0805','0807','0705','0811','0815','0905','0915'],
@@ -276,60 +303,137 @@
             };
 
             phoneInput.addEventListener('input', function () {
-                const phoneNumber = this.value;
-                networkResultDiv.textContent = '';
-
-                if (phoneNumber.length >= 4) {
-                    const prefix = phoneNumber.substring(0, 4);
+                const val = this.value;
+                if (val.length >= 4) {
+                    const prefix = val.substring(0, 4);
                     for (const network in networkPrefixes) {
                         if (networkPrefixes[network].includes(prefix)) {
-                            networkResultDiv.textContent = `Looks like a ${network.toUpperCase()} number.`;
-                            document.querySelector(`.network-option[data-network="${network}"]`)?.click();
-                            break;
+                            const opt = document.querySelector(`.network-option[data-network="${network}"]`);
+                            if (opt) opt.click();
+                            networkResultDiv.textContent = network.toUpperCase() + ' detected';
+                            return;
                         }
                     }
                 }
+                networkResultDiv.textContent = '';
             });
 
-            // --- Open PIN modal on Buy click ---
-            buyButton.addEventListener('click', function () {
-                const pinModal = new bootstrap.Modal(document.getElementById('pinModal'));
-                pinModal.show();
-            });
+            // --- Recent Recipient selection ---
+            window.selectRecentRecipient = function(number, network) {
+                phoneInput.value = number;
+                const option = document.querySelector(`.network-option[data-network="${network}"]`);
+                if (option) {
+                    option.click();
+                } else {
+                    phoneInput.dispatchEvent(new Event('input'));
+                }
+                phoneInput.focus();
+            };
 
-            // --- Confirm PIN & submit form ---
-            confirmButton.addEventListener('click', function () {
-                const pin      = document.getElementById('pinInput').value;
-                const pinError = document.getElementById('pinError');
+            // --- Open Modal (Step 1) ---
+            if (buyButton) {
+                buyButton.addEventListener('click', function () {
+                    const amount = amountInput.value;
+                    const number = phoneInput.value;
+                    const network = selectedNetworkInput.value;
 
-                this.disabled  = true;
-                this.innerHTML = '<i class="bi bi-arrow-repeat spinner-border spinner-border-sm"></i> Verifying...';
-
-                fetch("{{ route('verify.pin') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ pin })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.valid) {
-                        document.getElementById('buyAirtimeForm').submit();
-                    } else {
-                        pinError.classList.remove('d-none');
-                        this.disabled  = false;
-                        this.innerHTML = 'Confirm & Proceed';
+                    if (!number || number.length < 11) {
+                        alert('Please enter a valid 11-digit phone number.');
+                        phoneInput.focus();
+                        return;
                     }
-                })
-                .catch(() => {
-                    alert('Network error, please try again.');
-                    this.disabled  = false;
-                    this.innerHTML = 'Confirm & Proceed';
-                });
-            });
+                    if (!network) {
+                        alert('Please select a network operator.');
+                        return;
+                    }
+                    if (!amount || amount < 50) {
+                        alert('Minimum recharge is ₦50.');
+                        amountInput.focus();
+                        return;
+                    }
 
+                    // Populate Summary
+                    document.getElementById('confirmAccountName').textContent = number;
+                    document.getElementById('confirmBankName').textContent = network.toUpperCase() + ' Airtime';
+                    document.getElementById('confirmAccountNo').textContent = number;
+                    document.getElementById('confirmAmount').textContent = '₦' + parseFloat(amount).toLocaleString(undefined, {minimumFractionDigits: 2});
+
+                    const pinModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('pinModal'));
+                    pinModal.show();
+                });
+            }
+
+            // --- Modal Step Navigation (Summary -> PIN) ---
+            const btnGoToPin = document.getElementById('btnGoToPin');
+            if (btnGoToPin) {
+                btnGoToPin.addEventListener('click', () => {
+                    document.getElementById('confirmationStep')?.classList.add('d-none');
+                    document.getElementById('pinStep')?.classList.remove('d-none');
+                    document.getElementById('confirmationStep_footer')?.classList.add('d-none');
+                    document.getElementById('pinStep_footer')?.classList.remove('d-none');
+                    
+                    document.getElementById('modalTitle').textContent = 'Authorize Airtime';
+                    document.getElementById('modalSubtitle').textContent = 'Step 2 of 2 — Security PIN';
+                    
+                    setTimeout(() => document.getElementById('pinInput')?.focus(), 100);
+                });
+            }
+
+            // --- Final Authorization ---
+            const confirmPinBtn = document.getElementById('confirmPinBtn');
+            if (confirmPinBtn) {
+                confirmPinBtn.addEventListener('click', function () {
+                    const pin = document.getElementById('pinInput').value;
+                    const pinError = document.getElementById('pinError');
+                    const pinErrorText = document.getElementById('pinErrorText');
+                    
+                    if (!pin || pin.length !== 5) {
+                        if (pinErrorText) pinErrorText.textContent = 'Please enter your 5-digit PIN.';
+                        if (pinError) pinError.classList.remove('d-none');
+                        return;
+                    }
+
+                    this.disabled = true;
+                    const loader = document.getElementById('pinLoader');
+                    const btnText = document.getElementById('confirmPinText');
+                    if (loader) loader.classList.remove('d-none');
+                    if (btnText) btnText.textContent = 'Verifying...';
+
+                    fetch("{{ route('verify.pin') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ pin })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.valid) {
+                            const form = document.getElementById('buyAirtimeForm');
+                            const hiddenPin = document.createElement('input');
+                            hiddenPin.type = 'hidden';
+                            hiddenPin.name = 'pin';
+                            hiddenPin.value = pin;
+                            form.appendChild(hiddenPin);
+                            form.submit();
+                        } else {
+                            if (pinErrorText) pinErrorText.textContent = 'Incorrect PIN. Try again.';
+                            if (pinError) pinError.classList.remove('d-none');
+                            this.disabled = false;
+                            if (loader) loader.classList.add('d-none');
+                            if (btnText) btnText.textContent = 'Authorize Now';
+                            document.getElementById('pinInput').value = '';
+                        }
+                    })
+                    .catch(() => {
+                        alert('Network error. Please try again.');
+                        this.disabled = false;
+                        if (loader) loader.classList.add('d-none');
+                        if (btnText) btnText.textContent = 'Authorize Now';
+                    });
+                });
+            }
         });
     </script>
     @endpush
