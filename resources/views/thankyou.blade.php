@@ -30,7 +30,7 @@
         $serviceName = 'Service Purchase';
         if(session('token')) {
             $serviceName = 'Educational Pin';
-        } elseif (session('network') && str_contains(session('network'), 'data')) {
+        } elseif (session('network') && str_contains(strtolower(session('network')), 'data')) {
             $serviceName = 'Data Purchase';
         } elseif (session('network')) {
             $serviceName = 'Airtime Purchase';
@@ -47,6 +47,20 @@
     <div class="container-fluid px-0 px-md-3 py-3 py-sm-5 d-flex flex-column align-items-center bg-light min-vh-100">
         <!-- Navigation -->
         <div class="receipt-card mb-3 no-print">
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show text-center py-2 mb-3 shadow-sm border-0" role="alert">
+                    <small><i class="bi bi-check-circle-fill me-2"></i>{!! session('success') !!}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show text-center py-2 mb-3 shadow-sm border-0" role="alert">
+                    <small><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             <a href="{{ route('dashboard') }}" class="text-secondary text-decoration-none small d-flex align-items-center fw-semibold transition-all hover-translate-x">
                 <i class="bi bi-arrow-left me-2"></i>Dashboard
             </a>

@@ -19,6 +19,8 @@ class SmeData extends Model
         'size',
         'validity',
         'status',
+        'failure_count',
+        'last_failure_at',
     ];
 
     /**

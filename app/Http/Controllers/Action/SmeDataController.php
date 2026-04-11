@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\ActiveUsers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
+
 
 class SmeDataController extends Controller
 {
@@ -54,15 +57,10 @@ class SmeDataController extends Controller
             ->take(15)
             ->get();
 
-        // Fetch reliable SME plans (recently successful)
+        // Fetch reliable SME plans (those with 0 recent failures)
         $reliablePlans = SmeData::where('status', 'enabled')
-            ->whereIn('data_id', function($query) {
-                $query->select(DB::raw('JSON_EXTRACT(metadata, "$.data_id")'))
-                    ->from('transactions')
-                    ->where('status', 'completed')
-                    ->where('description', 'LIKE', '%SME Data%')
-                    ->where('created_at', '>=', Carbon::now()->subDays(3));
-            })
+            ->where('failure_count', 0)
+            ->latest()
             ->take(6)
             ->get();
 
@@ -131,10 +129,11 @@ class SmeDataController extends Controller
     public function buySMEdata(Request $request)
     {
         $request->validate([
-            'network'  => 'required|string',
+            'network'  => 'required|string|in:MTN,AIRTEL,GLO,9MOBILE',
             'type'     => 'required|string',
             'plan'     => 'required|string',
-            'mobileno' => 'required|numeric|digits:11'
+            'mobileno' => 'required|numeric|digits:11',
+            'pin'      => 'required|numeric|digits:5'
         ]);
 
         $user = Auth::user();
@@ -142,110 +141,165 @@ class SmeDataController extends Controller
             return redirect()->route('login')->with('error', 'Please log in to continue.');
         }
 
-        // status check for user account
-        if (($user->status ?? 'inactive') !== 'active') {
-            return redirect()->back()->with('error', "Your account is currently " . ($user->status ?? 'inactive') . ". Access denied.");
+        // Backend Idempotency/Double-Click Prevention
+        $lockKey = 'sme_purchase_lock_' . $user->id;
+        $lock = Cache::lock($lockKey, 30); // 30-second lock
+
+        if (!$lock->get()) {
+            return back()->with('error', 'A transaction is already in progress. Please wait a moment.');
         }
-
-        $mobileno = $request->mobileno;
-        $planId = $request->plan;
-        
-        $plan = SmeData::where('data_id', $planId)
-            ->where('network', strtoupper($request->network))
-            ->where('status', 'enabled')
-            ->first();
-
-        if (!$plan) {
-            return back()->with('error', 'Invalid or disabled data plan selected.');
-        }
-
-        // Calculate Final Price (SmeData Amount + Service Field Fees)
-        $payableAmount = $plan->calculatePriceForRole($user->role ?? 'user');
-        $description = "{$plan->size} {$plan->plan_type} for {$mobileno} ({$plan->network})";
-
-        // Check Wallet Balance
-        $wallet = Wallet::where('user_id', $user->id)->first();
-        if (!$wallet || $wallet->balance < $payableAmount) {
-            return redirect()->back()->with('error', 'Insufficient wallet balance! You need ₦' . number_format($payableAmount, 2));
-        }
-
-        if (($wallet->status ?? 'inactive') !== 'active') {
-            return redirect()->back()->with('error', 'Your wallet is not active. Please contact support.');
-        }
-
-        DB::beginTransaction();
 
         try {
-            // 4. Create Preliminary Record & Charge Wallet
-            $wallet->decrement('balance', $payableAmount);
-
-            // Create Transaction (Pending)
-            $transaction = Transaction::create([
-                'transaction_ref' => $requestId,
-                'user_id'         => $user->id,
-                'amount'          => $payableAmount,
-                'description'     => "SME Data purchase: " . $description,
-                'type'            => 'debit',
-                'status'          => 'pending',
-                'metadata'        => json_encode([
-                    'phone'        => $mobileno,
-                    'network'      => $plan->network,
-                    'plan_type'    => $plan->plan_type,
-                    'data_id'      => $plan->data_id,
-                    'request_id'   => $requestId
-                ]),
-                'performed_by'    => $user->first_name . ' ' . $user->last_name,
-                'approved_by'     => $user->id,
-            ]);
-
-            // Upstream API Call (DataStation)
-            $response = $this->callDataStation($requestId, $plan, $mobileno);
-
-            if (!$response['success']) {
-                // API Failed - REFUND
-                $wallet->increment('balance', $payableAmount);
-                $transaction->update([
-                    'status'   => 'failed',
-                    'metadata' => json_encode(array_merge(json_decode($transaction->metadata, true), [
-                        'api_error' => $response['message'] ?? 'Unknown API Error'
-                    ]))
-                ]);
-                
-                DB::commit();
-                return redirect()->back()->with('error', $response['message'] ?? 'Data purchase failed. Please try again later.');
+            // Verify Transaction PIN
+            if (!Hash::check($request->pin, $user->pin)) {
+                $lock->release();
+                return back()->with('error', 'Invalid transaction PIN.');
             }
 
-            // API Success - Finalize
-            $transactionRef = $response['transaction_ref'] ?? $requestId;
-            $apiData = $response['data'] ?? [];
+            // status check for user account
+            if (($user->status ?? 'inactive') !== 'active') {
+                $lock->release();
+                return redirect()->back()->with('error', "Your account is currently " . ($user->status ?? 'inactive') . ". Access denied.");
+            }
 
-            $transaction->update([
-                'status'          => 'completed',
-                'transaction_ref' => $transactionRef,
-                'metadata'        => json_encode(array_merge(json_decode($transaction->metadata, true), [
-                    'api_response' => $apiData
-                ]))
-            ]);
+            $requestId = RequestIdHelper::generateRequestId();
+            $mobileno = $request->mobileno;
+            $planId = $request->plan;
+            
+            $plan = SmeData::where('data_id', $planId)
+                ->where('network', strtoupper($request->network))
+                ->where('status', 'enabled')
+                ->first();
 
-            DB::commit();
+            if (!$plan) {
+                $lock->release();
+                return back()->with('error', 'Invalid or disabled data plan selected.');
+            }
 
-            return redirect()->route('thankyou')->with([
-                'success'         => 'Data purchase successful!',
-                'transaction_ref' => $transactionRef,
-                'request_id'      => $requestId,
-                'mobile'          => $mobileno,
-                'network'         => $plan->network,
-                'amount'          => $payableAmount,
-                'paid'            => $payableAmount,
-                'type'            => 'data'
-            ]);
+            // Calculate Final Price (SmeData Amount + Service Field Fees)
+            $payableAmount = $plan->calculatePriceForRole($user->role ?? 'user');
+            $description = "{$plan->size} {$plan->plan_type} for {$mobileno} ({$plan->network})";
 
+            // Check Wallet Balance
+            $wallet = Wallet::where('user_id', $user->id)->first();
+            if (!$wallet || $wallet->balance < $payableAmount) {
+                $lock->release();
+                return redirect()->back()->with('error', 'Insufficient wallet balance! You need ₦' . number_format($payableAmount, 2));
+            }
+
+            if (($wallet->status ?? 'inactive') !== 'active') {
+                $lock->release();
+                return redirect()->back()->with('error', 'Your wallet is not active. Please contact support.');
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // 4. Create Preliminary Record & Charge Wallet
+                $wallet->decrement('balance', $payableAmount);
+
+                // Create Transaction (Pending)
+                $transaction = Transaction::create([
+                    'transaction_ref' => $requestId,
+                    'user_id'         => $user->id,
+                    'amount'          => $payableAmount,
+                    'description'     => "SME Data purchase: " . $description,
+                    'type'            => 'debit',
+                    'status'          => 'pending',
+                    'metadata'        => json_encode([
+                        'phone'        => $mobileno,
+                        'network'      => $plan->network,
+                        'plan_type'    => $plan->plan_type,
+                        'data_id'      => $plan->data_id,
+                        'request_id'   => $requestId
+                    ]),
+                    'performed_by'    => $user->first_name . ' ' . $user->last_name,
+                    'approved_by'     => $user->id,
+                ]);
+
+                // Upstream API Call (DataStation)
+                $response = $this->callDataStation($requestId, $plan, $mobileno);
+
+                if (!$response['success']) {
+                    // API Failed - REFUND
+                    $wallet->increment('balance', $payableAmount);
+                    $transaction->update([
+                        'status'   => 'failed',
+                        'metadata' => json_encode(array_merge(json_decode($transaction->metadata, true), [
+                            'api_error' => $response['message'] ?? 'Unknown API Error'
+                        ]))
+                    ]);
+                    
+                    // Health Tracking & Auto-deactivation
+                    $errorMessage = $response['message'] ?? '';
+                    $terminalErrors = [
+                        'out of stock',
+                        'service unavailable',
+                        'network down',
+                        'invalid plan',
+                        'currently not available'
+                    ];
+
+                    $isTerminal = false;
+                    foreach ($terminalErrors as $term) {
+                        if (str_contains(strtolower($errorMessage), $term)) {
+                            $isTerminal = true;
+                            break;
+                        }
+                    }
+
+                    $plan->increment('failure_count');
+                    $plan->update(['last_failure_at' => now()]);
+
+                    if ($isTerminal || $plan->failure_count >= 5) {
+                        $plan->update(['status' => 'disabled']);
+                        $reason = $isTerminal ? "Terminal Error: $errorMessage" : "Threshold reached (5 failures)";
+                        Log::warning("SME Data plan [{$plan->data_id}] ({$plan->network} {$plan->size}) deactivated. Reason: {$reason}");
+                    }
+
+                    DB::commit();
+                    $lock->release();
+                    return redirect()->back()->with('error', $response['message'] ?? 'Data purchase failed. Please try again later.');
+                }
+
+                // API Success - Finalize
+                $plan->update(['failure_count' => 0]); // Reset on success
+                $transactionRef = $response['transaction_ref'] ?? $requestId;
+                $apiData = $response['data'] ?? [];
+
+                $transaction->update([
+                    'status'          => 'completed',
+                    'transaction_ref' => $transactionRef,
+                    'metadata'        => json_encode(array_merge(json_decode($transaction->metadata, true), [
+                        'api_response' => $apiData
+                    ]))
+                ]);
+
+                DB::commit();
+                $lock->release();
+
+                return redirect()->route('thankyou')->with([
+                    'success'  => 'Data purchase successful!',
+                    'ref'      => $transactionRef,
+                    'mobile'   => $mobileno,
+                    'network'  => $plan->network . ' Data',
+                    'amount'   => $payableAmount,
+                    'paid'     => $payableAmount,
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $lock->release();
+                Log::error('SME Data Purchase Exception: ' . $e->getMessage());
+                return back()->with('error', 'Something went wrong. Please try again.');
+            }
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('SME Data Purchase Exception: ' . $e->getMessage());
-            return back()->with('error', 'Something went wrong. Please try again.');
+            if (isset($lock)) $lock->release();
+            Log::error('SME Data Outer Exception: ' . $e->getMessage());
+            return back()->with('error', 'An error occurred. Please try again.');
         }
     }
+
 
     /**
      * Call DataStation API for purchase
