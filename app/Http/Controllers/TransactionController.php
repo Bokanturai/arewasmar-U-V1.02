@@ -25,16 +25,28 @@ class TransactionController extends Controller
             $query->where('type', $request->type);
         }
 
-        // Filter by Service Type
-        if ($request->filled('service_type')) {
-            $service = $request->service_type;
-            $query->where(function($q) use ($service) {
-                $q->where('description', 'like', "%$service%")
-                  ->orWhere('metadata', 'like', "%$service%");
+        // Filter by Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Global Keyword Search (Description, Ref, Metadata, Amount)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%$search%")
+                  ->orWhere('transaction_ref', 'like', "%$search%")
+                  ->orWhere('metadata', 'like', "%$search%");
+                
+                // Numeric search for amount
+                $numericSearch = str_replace([',', '₦'], '', $search);
+                if (is_numeric($numericSearch)) {
+                    $q->orWhere('amount', 'like', "%$numericSearch%");
+                }
             });
         }
 
-        // Filter by Date Range
+        // Filter by Date Range (Backup logic)
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }

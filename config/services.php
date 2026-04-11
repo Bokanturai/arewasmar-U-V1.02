@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'vtpass' => [
+        'api_key'       => env('API_KEY'),
+        'secret_key'    => env('SECRET_KEY'),
+        'base_url'      => env('BASE_URL', 'https://sandbox.vtpass.com/api'),
+        'payment_url'   => env('MAKE_PAYMENT'),
+        'variation_url' => env('VARIATION_URL'),
+    ],
+
+    'deepseek' => [
+        'key' => env('DEEPSEEK_API_KEY'),
+        'url' => env('DEEPSEEK_END_URL', 'https://api.deepseek.com'),
+    ],
+
 ];

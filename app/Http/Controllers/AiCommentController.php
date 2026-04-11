@@ -93,8 +93,9 @@ class AiCommentController extends Controller
         4. Tone: Expert, warm, premium. Use Nigerian business etiquette.
         
         Strict Formatting Rules:
-        - Start your response with: \"Dear User $userName,\"
-        - For summaries, include a section: \"The transaction summary for the last 5 days is:\"
+        - Start your response with: "Dear User $userName,"
+        - Acknowledge any specific Dashboard Totals (Credits/Debits) if provided in the context.
+        - For summaries, include a section: "Analysis of your activity:" 
         - List services (e.g., Airtime, Data, Verification, Validation) with their corresponding amounts.
         - Use HTML line breaks (<br>) to separate different services or sections for easy understanding.
         - Always end with an encouraging note to do more transactions.
@@ -118,17 +119,27 @@ class AiCommentController extends Controller
         if (!$reference)
             return "No specific record reference provided.";
 
-        $service = AgentService::where('reference', $reference)->first();
+        $userId = auth()->id();
+
+        // Security: Ensure the service belongs to the authenticated user
+        $service = AgentService::where('reference', $reference)
+            ->where('user_id', $userId)
+            ->first();
+            
         if ($service) {
             return "Service: {$service->service_name}\nStatus: {$service->status}\nAmount: {$service->amount}\nDescription: {$service->description}\nRef: {$service->reference}";
         }
 
-        $transaction = Transaction::where('transaction_ref', $reference)->first();
+        // Security: Ensure the transaction belongs to the authenticated user
+        $transaction = Transaction::where('transaction_ref', $reference)
+            ->where('user_id', $userId)
+            ->first();
+            
         if ($transaction) {
             return "Transaction: {$transaction->description}\nStatus: {$transaction->status}\nAmount: {$transaction->amount}\nPayer: {$transaction->payer_name}\nRef: {$transaction->transaction_ref}";
         }
 
-        return "Reference provided ($reference) but no matching service or transaction found.";
+        return "Reference provided ($reference) but no matching record found for your account.";
     }
 
     /**
@@ -174,8 +185,8 @@ class AiCommentController extends Controller
     private function callDeepseek($systemPrompt, $userMessage, $history = [])
     {
         try {
-            $apiKey = env('DEEPSEEK_API_KEY');
-            $baseUrl = rtrim(env('DEEPSEEK_END_URL', 'https://api.deepseek.com'), '/');
+            $apiKey = config('services.deepseek.key');
+            $baseUrl = rtrim(config('services.deepseek.url', 'https://api.deepseek.com'), '/');
 
             if (!$apiKey) {
                 return ['success' => false, 'message' => 'AI Service temporarily unavailable. Please try again later or contact support.'];
@@ -190,8 +201,7 @@ class AiCommentController extends Controller
 
             $messages[] = ['role' => 'user', 'content' => $userMessage];
 
-            $response = Http::withoutVerifying()
-                ->timeout(45)
+            $response = Http::timeout(45)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',

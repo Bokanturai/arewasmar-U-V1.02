@@ -40,19 +40,66 @@ class GiftCardController extends Controller
     }
 
     /**
-     * Display a listing of gift cards (Created and Redeemed by the user).
+     * Display a listing of gift cards (Created and Redeemed by the user) with search and filtering.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        $createdCards = GiftCard::where('created_by', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10, ['*'], 'created_page');
+        // Base Queries
+        $createdQuery = GiftCard::where('created_by', $user->id);
+        $redeemedQuery = GiftCard::where('used_by', $user->id);
 
-        $redeemedCards = GiftCard::where('used_by', $user->id)
-            ->orderBy('used_at', 'desc')
-            ->paginate(10, ['*'], 'redeemed_page');
+        // Filter by Keyword (Title or Amount)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $keywordFilter = function ($q) use ($search) {
+                $q->where('title', 'like', "%$search%")
+                  ->orWhere('amount', 'like', "%$search%");
+            };
+            $createdQuery->where($keywordFilter);
+            $redeemedQuery->where($keywordFilter);
+        }
+
+        // Filter by Style (Type)
+        if ($request->filled('style')) {
+            $createdQuery->where('style', $request->style);
+            $redeemedQuery->where('style', $request->style);
+        }
+
+        // Filter by Status
+        if ($request->filled('status')) {
+            $createdQuery->where('status', $request->status);
+            $redeemedQuery->where('status', $request->status);
+        }
+
+        // Filter by Created Date Range
+        if ($request->filled('created_from')) {
+            $createdQuery->whereDate('created_at', '>=', $request->created_from);
+            $redeemedQuery->whereDate('created_at', '>=', $request->created_from);
+        }
+        if ($request->filled('created_to')) {
+            $createdQuery->whereDate('created_at', '<=', $request->created_to);
+            $redeemedQuery->whereDate('created_at', '<=', $request->created_to);
+        }
+
+        // Filter by Redemption Date Range (Primarily for redeemed table)
+        if ($request->filled('redeemed_from')) {
+            $createdQuery->whereDate('used_at', '>=', $request->redeemed_from);
+            $redeemedQuery->whereDate('used_at', '>=', $request->redeemed_from);
+        }
+        if ($request->filled('redeemed_to')) {
+            $createdQuery->whereDate('used_at', '<=', $request->redeemed_to);
+            $redeemedQuery->whereDate('used_at', '<=', $request->redeemed_to);
+        }
+
+        $createdCards = $createdQuery->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'created_page')
+            ->appends($request->all());
+
+        $redeemedCards = $redeemedQuery->orderBy('used_at', 'desc')
+            ->paginate(10, ['*'], 'redeemed_page')
+            ->appends($request->all());
 
         return view('gift-cards.index', compact('createdCards', 'redeemedCards'));
     }
@@ -79,15 +126,15 @@ class GiftCardController extends Controller
             'title'            => 'required|string|max:25',
             'message'          => 'nullable|string|max:500',
             'style'            => 'required|string|in:' .
-                'birthday,wedding,anniversary,graduation,naming,housewarming,engagement,babyshower,' .
-                'romantic,valentine,apology,thankyou,missyou,friendship,' .
-                'fordad,formom,forbrother,forsister,family,care,' .
+                'birthday,wedding,anniversary,graduation,naming,housewarming,engagement,babyshower,celebration,party,' .
+                'romantic,valentine,apology,thankyou,missyou,friendship,love,care,' .
+                'fordad,formom,forbrother,forsister,family,' .
                 'christmas,newyear,eid,ramadan,easter,independence,' .
-                'reward,bonus,customerapp,promotion,salary,loyalty,' .
+                'reward,bonus,customerapp,promotion,salary,loyalty,corporate,modern_biz,' .
                 'gaming,shopping,food,travel,surprise,' .
                 'getwell,condolence,support,' .
-                'general,cash,custom',
-            'text_color'       => ['nullable', 'regex:/^#([0-9a-fA-F]{6})$/'],
+                'general,cash,custom,classic',
+            'text_color'       => ['nullable', 'regex:/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/'],
             'pin_confirmation' => 'required|string|max:20',
         ]);
 

@@ -69,9 +69,9 @@
         .animate-fade-in { animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .transaction-list::-webkit-scrollbar { width: 6px; }
-        .transaction-list::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 10px; }
-        .transaction-list::-webkit-scrollbar-thumb { background-color: #0d6efd; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #d47508ff; border-radius: 10px; }
     </style>
     @endpush
 
@@ -80,14 +80,14 @@
 
             {{-- Left Column: SME Data Form --}}
             <div class="col-12 col-xl-5 mb-4">
-                <div class="card custom-card shadow-lg border-0 rounded-0 rounded-md-4 d-flex flex-column" style="height: 650px;">
+                <div class="card custom-card shadow-lg border-0 rounded-0 rounded-md-4 d-flex flex-column">
                     <div class="card-header justify-content-between bg-primary text-white rounded-0 rounded-top-md-4 flex-shrink-0">
                         <div class="card-title fw-semibold">
                             <i class="bi bi-globe2 me-2"></i> SME Data Service
                         </div>
                     </div>
 
-                    <div class="card-body overflow-auto flex-grow-1">
+                    <div class="card-body">
                         <p class="text-center text-muted mb-4 small">
                             Affordable SME data bundles. Select network, data type, and plan to proceed.
                         </p>
@@ -191,8 +191,8 @@
                                 </div>
                             </div>
 
-                            <div class="d-grid">
-                                <button type="button" class="btn btn-primary btn-lg fw-bold rounded-pill shadow-sm py-2"
+                            <div class="d-grid shadow-sm">
+                                <button type="button" class="btn btn-primary btn-lg fw-bold rounded-pill py-2"
                                         onclick="openPinModal()">
                                     Proceed to Buy <i class="bi bi-chevron-right ms-1"></i>
                                 </button>
@@ -204,7 +204,7 @@
 
             {{-- Right Column: AI Guide & History --}}
             <div class="col-12 col-xl-7">
-                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 overflow-hidden d-flex flex-column shadow-hover transition-all" style="height: 650px;">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 overflow-hidden d-flex flex-column shadow-hover transition-all" style="height: 750px;">
                     <div class="card-header bg-white text-dark p-3 p-md-4 d-flex align-items-center justify-content-between rounded-0 rounded-top-md-4 flex-shrink-0">
                         <div class="d-flex align-items-center gap-3">
                             <div class="bg-primary rounded-circle p-2 shadow-sm" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
@@ -223,98 +223,101 @@
                         </div>
                     </div>
 
-                    {{-- Collapsible History Section --}}
-                    @php
-                        $networksData = $recentPurchases->groupBy(function($item) {
-                            $meta = json_decode($item->metadata, true);
-                            return strtoupper($meta['network'] ?? 'DATA');
-                        })->map(fn($group) => $group->sum('amount'));
+                    {{-- Unified Scrollable Section --}}
+                    <div class="flex-grow-1 overflow-auto custom-scrollbar" id="aiScrollContainer">
+                        @php
+                            $networksData = $recentPurchases->groupBy(function($item) {
+                                $meta = json_decode($item->metadata, true);
+                                return strtoupper($meta['network'] ?? 'DATA');
+                            })->map(fn($group) => $group->sum('amount'));
 
-                        $chartLabels = $networksData->keys()->toArray();
-                        $chartValues = $networksData->values()->toArray();
-                        
-                        $baseColors = [
-                            'MTN' => '#FFCC00',
-                            'AIRTEL' => '#ED1C24',
-                            'GLO' => '#008D41',
-                            '9MOBILE' => '#006633'
-                        ];
-                        $chartColors = [];
-                        foreach($chartLabels as $label) {
-                            $chartColors[] = $baseColors[$label] ?? '#0d6efd';
-                        }
-                    @endphp
+                            $chartLabels = $networksData->keys()->toArray();
+                            $chartValues = $networksData->values()->toArray();
+                            
+                            $baseColors = [
+                                'MTN' => '#FFCC00',
+                                'AIRTEL' => '#ED1C24',
+                                'GLO' => '#008D41',
+                                '9MOBILE' => '#006633'
+                            ];
+                            $chartColors = [];
+                            foreach($chartLabels as $label) {
+                                $chartColors[] = $baseColors[$label] ?? '#0d6efd';
+                            }
+                        @endphp
 
-                    <div class="collapse show" id="smeHistoryCollapse">
-                        <div class="bg-white border-bottom shadow-sm">
-                            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light-subtle">
-                                <div>
-                                    <small class="fw-bold text-muted text-uppercase mb-0 fs-11 px-2">
-                                        <i class="bi bi-bar-chart-fill me-2"></i>Usage Distribution
-                                    </small>
+                        <div class="collapse show" id="smeHistoryCollapse">
+                            <div class="bg-white border-bottom shadow-sm">
+                                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light-subtle">
+                                    <div>
+                                        <small class="fw-bold text-muted text-uppercase mb-0 fs-11 px-2">
+                                            <i class="bi bi-bar-chart-fill me-2"></i>Usage Distribution
+                                        </small>
+                                    </div>
+                                    <div class="text-end px-2">
+                                        <h6 class="mb-0 fw-bold text-primary fs-13">₦{{ number_format($recentPurchases->sum('amount'), 0) }}</h6>
+                                        <small class="text-muted fs-9">Total Last 15</small>
+                                    </div>
                                 </div>
-                                <div class="text-end px-2">
-                                    <h6 class="mb-0 fw-bold text-primary fs-13">₦{{ number_format($recentPurchases->sum('amount'), 0) }}</h6>
-                                    <small class="text-muted fs-9">Total Last 15</small>
+
+                                <div class="p-2">
+                                    <div id="usageChart" style="min-height: 180px;"></div>
                                 </div>
-                            </div>
 
-                            <div class="p-2">
-                                <div id="usageChart" style="min-height: 180px;"></div>
-                            </div>
-
-                            <div class="px-3 pb-3">
-                                <small class="text-muted fw-bold text-uppercase fs-9 d-block mb-2">Recent SME Activity</small>
-                                <div class="transaction-list" style="max-height: 200px; overflow-y: auto;">
-                                    @forelse($recentPurchases->take(15) as $history)
-                                        @php
-                                            $meta = json_decode($history->metadata, true);
-                                            $phone = $meta['phone'] ?? substr($history->description, -11);
-                                            $networkLabel = strtoupper($meta['network'] ?? 'DATA');
-                                            $networkColors = [
-                                                'MTN' => 'warning',
-                                                'AIRTEL' => 'danger',
-                                                'GLO' => 'success',
-                                                '9MOBILE' => 'dark'
-                                            ];
-                                            $nColor = $networkColors[$networkLabel] ?? 'primary';
-                                        @endphp
-                                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3 bg-light-subtle shadow-sm border-start border-3 border-{{ $nColor }}" 
-                                             onclick="repeatSme('{{ $networkLabel }}', '{{ $phone }}')" 
-                                             style="cursor: pointer; transition: all 0.2s ease;">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="bg-{{ $nColor }} bg-opacity-10 text-{{ $nColor }} rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                                    <i class="bi bi-reception-4 fs-12"></i>
+                                <div class="px-3 pb-3">
+                                    <small class="text-muted fw-bold text-uppercase fs-9 d-block mb-2">Recent SME Activity</small>
+                                    <div class="transaction-list">
+                                        @forelse($recentPurchases->take(15) as $history)
+                                            @php
+                                                $meta = json_decode($history->metadata, true);
+                                                $phone = $meta['phone'] ?? substr($history->description, -11);
+                                                $networkLabel = strtoupper($meta['network'] ?? 'DATA');
+                                                $networkColors = [
+                                                    'MTN' => 'warning',
+                                                    'AIRTEL' => 'danger',
+                                                    'GLO' => 'success',
+                                                    '9MOBILE' => 'dark'
+                                                ];
+                                                $nColor = $networkColors[$networkLabel] ?? 'primary';
+                                            @endphp
+                                            <div class="d-flex align-items-center justify-content-between p-2 mb-2 rounded-3 bg-light-subtle shadow-sm border-start border-3 border-{{ $nColor }}" 
+                                                 onclick="repeatSme('{{ $networkLabel }}', '{{ $phone }}')" 
+                                                 style="cursor: pointer; transition: all 0.2s ease;">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="bg-{{ $nColor }} bg-opacity-10 text-{{ $nColor }} rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                        <i class="bi bi-reception-4 fs-12"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0 fs-12 fw-bold text-dark">{{ $phone }}</h6>
+                                                        <small class="text-muted fs-10 text-uppercase">{{ $networkLabel }} • {{ $history->created_at->diffForHumans() }}</small>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h6 class="mb-0 fs-12 fw-bold text-dark">{{ $phone }}</h6>
-                                                    <small class="text-muted fs-10 text-uppercase">{{ $networkLabel }} • {{ $history->created_at->diffForHumans() }}</small>
+                                                <div class="text-end">
+                                                    <span class="d-block fs-12 fw-bold text-dark">₦{{ number_format($history->amount, 0) }}</span>
+                                                    <span class="badge {{ $history->status == 'completed' || $history->status == 'successful' ? 'bg-success' : 'bg-danger' }} p-1" style="font-size: 8px;">{{ strtoupper($history->status) }}</span>
                                                 </div>
                                             </div>
-                                            <div class="text-end">
-                                                <span class="d-block fs-12 fw-bold text-dark">₦{{ number_format($history->amount, 0) }}</span>
-                                                <span class="badge {{ $history->status == 'completed' || $history->status == 'successful' ? 'bg-success' : 'bg-danger' }} p-1" style="font-size: 8px;">{{ strtoupper($history->status) }}</span>
-                                            </div>
-                                        </div>
-                                    @empty
-                                        <div class="text-center py-4 text-muted small">No recent SME purchases.</div>
-                                    @endforelse
+                                        @empty
+                                            <div class="text-center py-4 text-muted small">No recent SME purchases.</div>
+                                        @endforelse
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="card-body bg-light-subtle flex-grow-1 overflow-auto p-3 p-md-4" id="aiChatWindow" style="min-height: 0;">
-                        <div class="d-flex gap-2 mb-4 animate-fade-in">
-                            <div class="bg-primary text-white rounded-circle p-1 align-self-start shadow-sm" style="width:28px;height:28px;font-size:12px;display:flex;align-items:center;justify-content:center; flex-shrink:0;">AS</div>
-                            <div class="bg-white p-3 rounded-4 rounded-start-0 shadow-sm border small shadow-hover" style="max-width: 85%;">
-                                <p class="mb-0 text-dark">Hello! I'm your SME Data specialist. Need recommendations for MTN or Airtel?</p>
+                        {{-- AI Chat Window --}}
+                        <div class="card-body bg-light-subtle p-3 p-md-4" id="aiChatWindow" style="min-height: 300px;">
+                            <div class="d-flex gap-2 mb-4 animate-fade-in">
+                                <div class="bg-primary text-white rounded-circle p-1 align-self-start shadow-sm" style="width:28px;height:28px;font-size:12px;display:flex;align-items:center;justify-content:center; flex-shrink:0;">AS</div>
+                                <div class="bg-white p-3 rounded-4 rounded-start-0 shadow-sm border small shadow-hover" style="max-width: 85%;">
+                                    <p class="mb-0 text-dark">Hello! I'm your SME Data specialist. Need recommendations for MTN or Airtel?</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div id="aiTypingIndicator" class="px-4 py-2 d-none">
-                        <small class="text-muted"><i class="bi bi-stars spin me-1"></i> Analyzing SME options...</small>
+                        <div id="aiTypingIndicator" class="px-4 py-2 d-none">
+                            <small class="text-muted"><i class="bi bi-stars spin me-1"></i> Analyzing SME options...</small>
+                        </div>
                     </div>
 
                     <div class="card-footer bg-white border-top p-3 p-md-4 mt-auto rounded-0 rounded-bottom-md-4 shadow-sm">
@@ -405,6 +408,7 @@
             const aiWin = document.getElementById('aiChatWindow');
             const aiIn = document.getElementById('aiInput');
             const typeInd = document.getElementById('aiTypingIndicator');
+            const scrollCont = document.getElementById('aiScrollContainer');
 
             const addBubble = (txt, role = 'user') => {
                 const wrap = document.createElement('div');
@@ -419,7 +423,7 @@
                 
                 wrap.innerHTML = html;
                 aiWin.appendChild(wrap);
-                aiWin.scrollTop = aiWin.scrollHeight;
+                scrollCont.scrollTop = scrollCont.scrollHeight;
                 convHistory.push({ role, content: txt });
             };
 
@@ -549,24 +553,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        window.applySmePlan = function(net, type, pid) {
-            const netVal = net.toUpperCase();
-            const netId = netVal === '9MOBILE' ? '9mobile' : netVal.toLowerCase();
-            selectNetwork(netVal, 'net-' + netId);
-            setTimeout(() => {
-                $("#sme_type").val(type).trigger('change');
-                setTimeout(() => {
-                    $("#sme_plan").val(pid).trigger('change');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 800);
-            }, 800);
-        };
-
-        window.clearChat = function() {
-            document.getElementById('aiChatWindow').innerHTML = '';
-            convHistory = [];
-        };
-
         window.toggleBalanceVisibility = function() {
             const balanceSpan = document.getElementById('walletBalance');
             const toggleIcon = document.getElementById('toggleBalance');
@@ -605,7 +591,6 @@
             pinModal.show();
         };
 
-        // PIN Verification logic handles form submission
         $('#confirmPinBtn').on('click', function() {
             const pin = $('#pinInput').val().trim();
             if(!pin) return;
@@ -646,6 +631,11 @@
                 }
             }
         });
+
+        window.clearChat = function() {
+            document.getElementById('aiChatWindow').innerHTML = '';
+            convHistory = [];
+        };
     </script>
     @endpush
 </x-app-layout>

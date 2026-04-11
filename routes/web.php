@@ -123,13 +123,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/buy-jamb', [EducationalController::class, 'buyJamb'])->name('buyjamb');
 
     Route::get('/electricity', [App\Http\Controllers\Action\ElectricityController::class, 'index'])->name('electricity');
-    Route::post('/verify-electricity', [App\Http\Controllers\Action\ElectricityController::class, 'verifyMeter'])->name('verify.electricity');
-    Route::post('/buy-electricity', [App\Http\Controllers\Action\ElectricityController::class, 'purchase'])->name('buy.electricity');
+    Route::post('/verify-electricity', [App\Http\Controllers\Action\ElectricityController::class, 'verifyMeter'])->middleware('throttle:10,1')->name('verify.electricity');
+    Route::post('/buy-electricity', [App\Http\Controllers\Action\ElectricityController::class, 'purchase'])->middleware('throttle:5,1')->name('buy.electricity');
 
     Route::get('/cable', [App\Http\Controllers\Action\CableController::class, 'index'])->name('cable');
     Route::get('/cable/variations', [App\Http\Controllers\Action\CableController::class, 'getVariations'])->name('cable.variations');
-    Route::post('/cable/verify', [App\Http\Controllers\Action\CableController::class, 'verifyIuc'])->name('verify.cable');
-    Route::post('/cable/buy', [App\Http\Controllers\Action\CableController::class, 'purchase'])->name('buy.cable');
+    Route::post('/cable/verify', [App\Http\Controllers\Action\CableController::class, 'verifyIuc'])->middleware('throttle:10,1')->name('verify.cable');
+    Route::post('/cable/buy', [App\Http\Controllers\Action\CableController::class, 'purchase'])->middleware('throttle:5,1')->name('buy.cable');
 
     Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
 

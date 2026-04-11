@@ -18,18 +18,7 @@
         }
 
         /* ── Common Card Styles ─────────────────────────────────────────── */
-        .premium-card {
-            border: none;
-            border-radius: var(--gc-border-radius);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            background: var(--gc-surface);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .premium-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
-        }
+        /* Using Bootstrap card utility classes */
 
         /* ── Amount Quick Select ────────────────────────────────────────── */
         .amount-chips {
@@ -125,10 +114,32 @@
         /* Theme Gradients */
         .sw-birthday { background: linear-gradient(135deg, #f43f5e, #fb923c); }
         .sw-celebration { background: linear-gradient(135deg, #6366f1, #a855f7); }
-        .sw-love { background: linear-gradient(135deg, #e11d48, #be123c); }
-        .sw-gaming { background: linear-gradient(135deg, #1e293b, #475569); }
+        .sw-wedding { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%); }
+        .sw-anniversary { background: linear-gradient(135deg, #ee9ca7 0%, #ffdde1 100%); }
+        .sw-graduation { background: linear-gradient(135deg, #0ea5e9, #2563eb); }
+        .sw-party { background: linear-gradient(135deg, #fbbf24, #f97316); }
+        .sw-thanks { background: linear-gradient(135deg, #a8ff78, #78ffd6); }
+
+        .sw-romantic { background: linear-gradient(135deg, #e11d48, #be123c); }
+        .sw-love { background: linear-gradient(135deg, #ff0000, #ff6666); }
+        .sw-valentine { background: linear-gradient(to top, #ff0844 0%, #ffb199 100%); }
+        .sw-passion { background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); }
+        .sw-care { background: linear-gradient(120deg, #f093fb 0%, #f5576c 100%); }
+        .sw-friendship { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
         .sw-business { background: linear-gradient(135deg, #0f172a, #334155); }
+        .sw-corporate { background: linear-gradient(135deg, #243949 0%, #517fa4 100%); }
+        .sw-modern-biz { background: linear-gradient(135deg, #09203f 0%, #537895 100%); }
+        .sw-reward { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .sw-promotion { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .sw-salary { background: linear-gradient(135deg, #11998e, #38ef7d); }
+
         .sw-general { background: linear-gradient(135deg, #4f46e5, #3b82f6); }
+        .sw-gaming { background: linear-gradient(135deg, #1e293b, #475569); }
+        .sw-shopping { background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%); }
+        .sw-food { background: linear-gradient(135deg, #ff7e5f, #feb47b); }
+        .sw-travel { background: linear-gradient(to top, #209cff 0%, #68e0cf 100%); }
+        .sw-surprise { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
 
         /* ── Live Card Component ─────────────────────────────────────────── */
         .live-card-container {
@@ -242,12 +253,12 @@
         }
     </style>
 
-    <div class="container-fluid py-4">
-        <div class="row g-4">
+    <div class="container-fluid px-0 px-md-3 py-4">
+        <div class="row g-0 g-md-4">
             
             <!-- Left: Customization Form -->
-            <div class="col-lg-6">
-                <div class="premium-card p-4 p-xl-5">
+            <div class="col-12 col-xl-5 mb-4">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4 p-4 p-xl-5">
                     <div class="d-flex align-items-center gap-3 mb-4">
                         <div class="avatar-sm bg-primary-soft rounded-3 p-2">
                             <i class="ti ti-gift fs-1 text-primary"></i>
@@ -329,30 +340,95 @@
                         <div class="mb-4">
                             <label class="form-label fw-bold small text-uppercase letter-spacing-1">Choose Theme</label>
                             <div class="theme-tabs">
+                                <button type="button" class="theme-tab" data-cat="all">Show All</button>
                                 <button type="button" class="theme-tab active" data-cat="celebration">Celebration</button>
                                 <button type="button" class="theme-tab" data-cat="love">Love</button>
                                 <button type="button" class="theme-tab" data-cat="business">Business</button>
-                                <button type="button" class="theme-tab" data-cat="general">General</button>
+                                <button type="button" class="theme-tab" data-cat="general">Others</button>
                             </div>
 
                             <div class="theme-grid">
+                                {{-- Celebration Category --}}
                                 <div class="theme-swatch sw-birthday selected" data-theme="birthday" data-cat="celebration">
                                     <span class="sw-icon">🎂</span> Birthday
                                 </div>
                                 <div class="theme-swatch sw-celebration" data-theme="celebration" data-cat="celebration">
                                     <span class="sw-icon">🎉</span> Congrats
                                 </div>
+                                <div class="theme-swatch sw-wedding" data-theme="wedding" data-cat="celebration">
+                                    <span class="sw-icon">💍</span> Wedding
+                                </div>
+                                <div class="theme-swatch sw-anniversary" data-theme="anniversary" data-cat="celebration">
+                                    <span class="sw-icon">🎊</span> Anniversary
+                                </div>
+                                <div class="theme-swatch sw-graduation" data-theme="graduation" data-cat="celebration">
+                                    <span class="sw-icon">🎓</span> Graduate
+                                </div>
+                                <div class="theme-swatch sw-party" data-theme="party" data-cat="celebration">
+                                    <span class="sw-icon">🕺</span> Party
+                                </div>
+                                <div class="theme-swatch sw-thanks" data-theme="thankyou" data-cat="celebration">
+                                    <span class="sw-icon">🙏</span> Thanks
+                                </div>
+
+                                {{-- Love Category --}}
+                                <div class="theme-swatch sw-romantic" data-theme="romantic" data-cat="love">
+                                    <span class="sw-icon">🌹</span> Romantic
+                                </div>
                                 <div class="theme-swatch sw-love" data-theme="love" data-cat="love">
-                                    <span class="sw-icon">❤️</span> Romantic
+                                    <span class="sw-icon">❤️</span> Love
                                 </div>
-                                <div class="theme-swatch sw-gaming" data-theme="gaming" data-cat="general">
-                                    <span class="sw-icon">🎮</span> Gamer
+                                <div class="theme-swatch sw-valentine" data-theme="valentine" data-cat="love">
+                                    <span class="sw-icon">💘</span> Valentine
                                 </div>
-                                <div class="theme-swatch sw-business" data-theme="business" data-cat="business">
+                                <div class="theme-swatch sw-passion" data-theme="passion" data-cat="love">
+                                    <span class="sw-icon">🔥</span> Passion
+                                </div>
+                                <div class="theme-swatch sw-care" data-theme="care" data-cat="love">
+                                    <span class="sw-icon">🤗</span> Care
+                                </div>
+                                <div class="theme-swatch sw-friendship" data-theme="friendship" data-cat="love">
+                                    <span class="sw-icon">🤝</span> Friendly
+                                </div>
+
+                                {{-- Business Category --}}
+                                <div class="theme-swatch sw-business" data-theme="reward" data-cat="business">
                                     <span class="sw-icon">💼</span> Business
                                 </div>
-                                <div class="theme-swatch sw-general" data-theme="general" data-cat="general">
+                                <div class="theme-swatch sw-corporate" data-theme="corporate" data-cat="business">
+                                    <span class="sw-icon">🏢</span> Corporate
+                                </div>
+                                <div class="theme-swatch sw-modern-biz" data-theme="modern_biz" data-cat="business">
+                                    <span class="sw-icon">🚀</span> Startup
+                                </div>
+                                <div class="theme-swatch sw-reward" data-theme="reward" data-cat="business">
+                                    <span class="sw-icon">🏆</span> Gold Reward
+                                </div>
+                                <div class="theme-swatch sw-promotion" data-theme="promotion" data-cat="business">
+                                    <span class="sw-icon">📈</span> Growth
+                                </div>
+                                <div class="theme-swatch sw-salary" data-theme="salary" data-cat="business">
+                                    <span class="sw-icon">💰</span> Salary
+                                </div>
+
+                                {{-- General/Others Category --}}
+                                <div class="theme-swatch sw-general" data-theme="classic" data-cat="general">
                                     <span class="sw-icon">💳</span> Classic
+                                </div>
+                                <div class="theme-swatch sw-gaming" data-theme="gaming" data-cat="general">
+                                    <span class="sw-icon">🎮</span> Gaming
+                                </div>
+                                <div class="theme-swatch sw-shopping" data-theme="shopping" data-cat="general">
+                                    <span class="sw-icon">🛍️</span> Shopping
+                                </div>
+                                <div class="theme-swatch sw-food" data-theme="food" data-cat="general">
+                                    <span class="sw-icon">🍕</span> Foodie
+                                </div>
+                                <div class="theme-swatch sw-travel" data-theme="travel" data-cat="general">
+                                    <span class="sw-icon">✈️</span> Travel
+                                    </div>
+                                <div class="theme-swatch sw-surprise" data-theme="surprise" data-cat="general">
+                                    <span class="sw-icon">🎁</span> Surprise
                                 </div>
                             </div>
                         </div>
@@ -370,7 +446,7 @@
             </div>
 
             <!-- Right: Live Preview -->
-            <div class="col-lg-6 order-first order-lg-last">
+            <div class="col-12 col-xl-7 mt-2 mt-md-0 order-first order-lg-last">
                 <div class="preview-sticky position-sticky" style="top: 2rem;">
                     <div class="text-center mb-4">
                         <span class="badge bg-light text-primary py-2 px-3 fw-bold rounded-pill border">LIVE PREVIEW</span>
@@ -633,6 +709,12 @@
                 if(pin.length < 4) return Swal.fire('Error', 'Please enter a valid PIN', 'error');
                 document.getElementById('pinConfirmation').value = pin;
                 generateForm.submit();
+            });
+
+            // Initial Category Filter (show active category by default)
+            const activeCat = document.querySelector('.theme-tab.active').dataset.cat;
+            themeSwatches.forEach(sw => {
+                sw.style.display = (activeCat === 'all' || sw.dataset.cat === activeCat) ? 'flex' : 'none';
             });
 
             updatePreview();

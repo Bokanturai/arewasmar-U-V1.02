@@ -60,9 +60,10 @@ class ElectricityController extends Controller
 
         try {
             $response = Http::withHeaders([
-                'api-key'    => env('API_KEY'),
-                'secret-key' => env('SECRET_KEY'),
-            ])->post(env('BASE_URL', 'https://sandbox.vtpass.com/api') . '/merchant-verify', [
+                'api-key'    => config('services.vtpass.api_key'),
+                'secret-key' => config('services.vtpass.secret_key'),
+            ])->timeout(30)
+            ->post(config('services.vtpass.base_url') . '/merchant-verify', [
                 'serviceID'   => $request->service_id,
                 'billersCode' => $request->meter_number,
                 'type'        => $request->meter_type,
@@ -103,6 +104,7 @@ class ElectricityController extends Controller
             'phone'        => 'required|numeric|digits:11',
         ]);
 
+        $amount = $request->amount;
         $user = Auth::user();
         
         // 0. Preliminary Status Checks
@@ -115,8 +117,17 @@ class ElectricityController extends Controller
         DB::beginTransaction();
 
         try {
-            // 4. Create Preliminary Records & Charge Wallet
+            // 4. Fetch Wallet and Charge (with lock for production safety)
+            $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
+            
+            if (!$wallet || $wallet->balance < $amount) {
+                DB::rollBack();
+                return back()->with('error', 'Insufficient wallet balance.');
+            }
+
+            $oldBalance = $wallet->balance;
             $wallet->decrement('balance', $amount);
+            $newBalance = $wallet->balance;
 
             // Create Transaction (Pending)
             $transaction = Transaction::create([
@@ -140,15 +151,16 @@ class ElectricityController extends Controller
                 'status'       => 'pending',
                 'type'         => 'electricity',
                 'description'  => "Electricity Payment (Pending) - Meter: {$request->meter_number}",
-                'old_balance'  => $wallet->balance + $amount,
-                'new_balance'  => $wallet->balance,
+                'old_balance'  => $oldBalance,
+                'new_balance'  => $newBalance,
             ]);
 
-            // 5. Call VTPass API
+            // 5. Call VTPass API with timeout
             $response = Http::withHeaders([
-                'api-key'    => env('API_KEY'),
-                'secret-key' => env('SECRET_KEY'),
-            ])->post(env('MAKE_PAYMENT'), [
+                'api-key'    => config('services.vtpass.api_key'),
+                'secret-key' => config('services.vtpass.secret_key'),
+            ])->timeout(45)
+            ->post(config('services.vtpass.payment_url'), [
                 'request_id'     => $requestId,
                 'serviceID'      => $request->service_id,
                 'billersCode'    => $request->meter_number,
@@ -209,10 +221,19 @@ class ElectricityController extends Controller
                     ]);
                 }
 
-                Log::error('Electricity API Error', ['response' => $result]);
+                Log::error('Electricity API Error', [
+                    'user_id' => $user->id,
+                    'request_id' => $requestId,
+                    'response' => $result
+                ]);
                 $errorMsg = 'Payment failed. ' . ($result['response_description'] ?? 'Try again.');
             } else {
-                Log::error('Electricity HTTP Error', ['body' => $response->body()]);
+                Log::error('Electricity HTTP Error', [
+                    'user_id' => $user->id,
+                    'request_id' => $requestId,
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
                 $errorMsg = 'Service unavailable.';
             }
 
@@ -229,8 +250,12 @@ class ElectricityController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Electricity Exception: ' . $e->getMessage());
-            return back()->with('error', 'An error occurred.');
+            Log::error('Electricity Exception', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'An error occurred during processing.');
         }
     }
 }

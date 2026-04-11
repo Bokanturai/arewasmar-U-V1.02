@@ -1,345 +1,502 @@
 <x-app-layout>
     <x-slot name="header">
-        Profile Settings
+        Account Settings
     </x-slot>
 
     <!-- Custom CSS for this page -->
     <style>
-        .profile-header-bg {
-            background: linear-gradient(135deg, rgba(233,60,17,1) 0%, rgba(230,155,16,1) 100%);
-            height: 140px;
-            border-radius: 1rem 1rem 0 0;
-            position: relative;
+        :root {
+            --primary-gradient: linear-gradient(135deg, #e93c11 0%, #ff8c00 100%);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --accent-glow: 0 0 15px rgba(233, 60, 17, 0.3);
         }
-        .profile-avatar-wrapper {
-            margin-top: -70px;
-            position: relative;
-            z-index: 2;
+
+        /* Tabs Styling */
+        .settings-nav {
+            background: #fff;
+            padding: 0.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
-        .profile-avatar {
-            width: 140px;
-            height: 140px;
+        .settings-nav::-webkit-scrollbar { display: none; }
+        
+        .settings-nav .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .settings-nav .nav-link i { font-size: 1.2rem; }
+        .settings-nav .nav-link.active {
+            background: var(--primary-gradient);
+            color: #fff !important;
+            box-shadow: var(--accent-glow);
+        }
+        @media (max-width: 768px) {
+            .settings-nav {
+                padding: 0.25rem;
+                margin-left: -10px;
+                margin-right: -10px;
+                width: calc(100% + 20px);
+                border-radius: 0;
+            }
+            .settings-nav .nav-link {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+        .settings-nav .nav-link:hover:not(.active) {
+            background: #f8f9fa;
+            color: #e93c11;
+        }
+
+        /* Profile Header Glassmorphism */
+        .profile-hero {
+            position: relative;
+            background: var(--primary-gradient);
+            min-height: 200px;
+            margin-bottom: 3rem;
+            /* overflow: hidden; Removed to prevent clipping content-header */
+        }
+        .profile-hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .profile-hero-pattern {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-46-43c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm20-27c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM2 30c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zm26-2c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zm55 56c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zm-8-78c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zm-51 72c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zM21 20c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zm65 11c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zM17 77c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1zm70 12c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        
+        .profile-content-header {
+            position: absolute;
+            bottom: -40px;
+            left: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--card-shadow);
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .profile-hero { 
+                min-height: 160px; 
+                margin-bottom: 5.5rem; 
+                margin-left: -15px;
+                margin-right: -15px;
+                width: calc(100% + 30px);
+                border-radius: 0 !important;
+            }
+            .profile-hero-pattern { border-radius: 0; }
+            .settings-nav {
+                padding: 0.25rem;
+                margin-left: -15px;
+                margin-right: -15px;
+                width: calc(100% + 30px);
+                border-radius: 0 !important;
+            }
+            .profile-content-header { 
+                bottom: -70px; 
+                left: 10px; 
+                right: 10px; 
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 0.75rem;
+                border-radius: 1rem;
+            }
+            .profile-avatar-main { width: 80px; height: 80px; }
+            .avatar-container { margin-top: -55px; margin-bottom: 5px; }
+            .edit-badge-main { width: 28px; height: 28px; bottom: 2px; right: 2px; }
+        }
+
+        .avatar-container {
+            position: relative;
+            background: #fff;
+            padding: 4px;
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .profile-avatar-main {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
             object-fit: cover;
-            border: 5px solid #fff;
-            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
-            transition: transform 0.3s ease;
-            background-color: #fff;
         }
-        .profile-avatar:hover {
-            transform: scale(1.05);
-        }
-        .avatar-edit-badge {
+        .edit-badge-main {
             position: absolute;
             bottom: 5px;
             right: 5px;
             background: #e93c11;
-            color: white;
+            color: #fff;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            width: 35px;
-            height: 35px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             border: 3px solid #fff;
-            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-            transition: background 0.2s ease;
         }
-        .avatar-edit-badge:hover {
-            background: #cd320c;
-        }
-        .info-card {
+
+        /* Stats Cards */
+        .stat-card {
+            background: #fff;
+            padding: 1.25rem;
+            border: 1px solid #f1f1f1;
             transition: all 0.3s ease;
-            border-left: 4px solid transparent;
             height: 100%;
         }
-        .info-card:hover {
-            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08) !important;
-            border-left-color: #e93c11;
-            transform: translateY(-2px);
-        }
-        .icon-circle {
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--card-shadow); }
+        .stat-icon {
             width: 45px;
             height: 45px;
+            border-radius: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: rgba(233,60,17,0.1);
-            color: #e93c11;
+            margin-bottom: 1rem;
             font-size: 1.25rem;
         }
-        .settings-btn {
-            border-radius: 0.75rem;
-            padding: 0.75rem 1.25rem;
-            font-weight: 600;
+
+        /* Info Item Styling */
+        .info-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid transparent;
             transition: all 0.2s ease;
-            background-color: #f8f9fa;
         }
-        .settings-btn:hover {
-            transform: translateY(-1px);
-            background-color: #eef1f5;
-        }
-        .modal-content-custom {
-            border: none;
-            border-radius: 1.25rem;
-            overflow: hidden;
-        }
-        .modal-header-custom {
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding: 1.5rem 1.5rem 1rem;
-            background-color: #f8f9fa;
-        }
-        .modal-footer-custom {
-            border-top: none;
-            padding: 1rem 1.5rem 1.5rem;
-        }
-        .input-group-custom .input-group-text {
-            border-right: none;
-            background-color: transparent;
-            color: #6c757d;
-        }
-        .input-group-custom .form-control {
-            border-left: none;
-            padding-left: 0;
-        }
-        .input-group-custom .form-control:focus {
-            box-shadow: none;
-            border-color: #dee2e6;
-        }
-        .input-group-custom:focus-within {
-            box-shadow: 0 0 0 0.25rem rgba(233, 60, 17, 0.25);
-            border-radius: 0.375rem;
-        }
-        .input-group-custom:focus-within .input-group-text,
-        .input-group-custom:focus-within .form-control {
+        .info-item:hover {
+            background: #fff;
             border-color: #e93c11;
+            box-shadow: 0 5px 15px rgba(233, 60, 17, 0.05);
         }
-        .badge-custom {
-            background: rgba(233,60,17,0.1);
-            color: #e93c11;
+
+        /* Progress Bar */
+        .progress-slim { height: 8px; border-radius: 10px; }
+
+        /* Security Status */
+        .status-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
-        .text-c-primary {
-            color: #e93c11;
+        .status-badge.verified { background: rgba(25, 135, 84, 0.1); color: #198754; }
+        
+        /* Modal Customization */
+        .modal-content-premium {
+            border: none;
+            border-radius: 1.5rem;
+            background: #fff;
         }
     </style>
 
     <!-- Cropper.css -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
 
-    <div class="container-fluid py-4">
+    <div class="container-fluid px-0 px-md-3 py-4">
         
         <!-- Alerts -->
         @if (session('status'))
-            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 bg-success text-white d-flex align-items-center" role="alert">
-                <i class="ti ti-check-circle fs-4 me-2"></i>
-                <div>
-                    <strong>Success!</strong> {{ session('status') }}
-                </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-success alert-dismissible fade show rounded-0 rounded-md-4 shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+                <i class="ti ti-circle-check fs-13 me-2"></i>
+                <div>{{ session('status') }}</div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 bg-danger text-white d-flex align-items-center" role="alert">
-                <i class="ti ti-alert-triangle fs-4 me-2"></i>
-                <div>
-                    <strong>Error!</strong> {{ session('error') }}
-                </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+        <!-- Tabbed Navigation -->
+        <div class="settings-nav nav rounded-0 rounded-md-4" role="tablist">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                <i class="ti ti-layout-dashboard"></i> Overview
+            </button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profile" type="button">
+                <i class="ti ti-user"></i> Profile Details
+            </button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#security" type="button">
+                <i class="ti ti-shield-lock"></i> Security
+            </button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#activity" type="button">
+                <i class="ti ti-history"></i> Activity Log
+            </button>
+        </div>
 
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 bg-danger text-white d-flex align-items-start" role="alert">
-                <i class="ti ti-alert-circle fs-4 me-2 mt-1"></i>
-                <div>
-                    <strong class="d-block mb-1">Please fix the following errors:</strong>
-                    <ul class="mb-0 ps-3">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        <div class="row g-4">
-
-            <!-- LEFT COLUMN -->
-            <div class="col-xl-4 col-lg-5 mb-4">
-                <!-- Profile Card -->
-                <div class="card border-0 shadow-sm rounded-4 text-center overflow-hidden">
-                    <!-- Header Background -->
-                    <div class="profile-header-bg">
-                        <div style="background: url('{{ asset('assets/img/pattern.png') }}') repeat; opacity: 0.1; width: 100%; height: 100%; position: absolute; top:0; left:0;"></div>
+        <div class="tab-content mt-4">
+            <!-- OVERVIEW TAB -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="profile-hero rounded-0 rounded-md-4">
+                    <div class="profile-hero-bg rounded-0 rounded-md-4">
+                        <div class="profile-hero-pattern"></div>
                     </div>
+                    <div class="profile-content-header rounded-0 rounded-md-4">
+                        <div class="avatar-container">
+                            <img src="{{ $user->photo ? (str_starts_with($user->photo, 'http') ? $user->photo : asset($user->photo)) : asset('assets/img/profiles/avatar-01.jpg') }}" 
+                                 class="profile-avatar-main" id="profileImagePreview">
+                            <div class="edit-badge-main" data-bs-toggle="modal" data-bs-target="#photoModal">
+                                <i class="ti ti-camera"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 w-100">
+                            <h3 class="fw-bold mb-1 text-primary fs-14 fs-md-3">{{ $user->first_name }} {{ $user->last_name }}</h3>
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 gap-md-3 flex-wrap">
+                                <span class="bg-light px-2 py-1 rounded-pill text-muted small"><i class="ti ti-mail me-1"></i>{{ $user->email }}</span>
+                                <span class="status-badge verified small py-1 px-3 shadow-sm border bg-white rounded-pill">
+                                    <i class="ti ti-shield-check me-1"></i> {{ $user->email_verified_at ? 'Verified' : 'Pending' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-none d-lg-block">
+                            <div class="text-end mb-1 small fw-bold text-muted">Profile Completion</div>
+                            <div class="progress progress-slim" style="width: 150px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 85%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="card-body pt-0 pb-4 px-4">
-                        <!-- Profile Photo with Edit Button -->
-                        <div class="profile-avatar-wrapper text-center">
-                            <div class="position-relative d-inline-block" style="width: 140px; height: 140px;">
-                                <img src="{{ $user->photo ? (str_starts_with($user->photo, 'http') ? $user->photo : asset($user->photo)) : asset('assets/img/profiles/avatar-01.jpg') }}"
-                                     alt="Profile Photo"
-                                     class="rounded-circle profile-avatar shadow-sm w-100 h-100">
-                                <div class="avatar-edit-badge" data-bs-toggle="modal" data-bs-target="#photoModal" title="Update Photo">
-                                    <i class="ti ti-camera"></i>
+                <div class="row g-0 g-md-4 mt-1">
+                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                        <div class="stat-card rounded-0 rounded-md-4 shadow-sm">
+                            <div class="stat-icon bg-primary-subtle text-primary">
+                                <i class="ti ti-crown"></i>
+                            </div>
+                            <div class="text-muted small mb-1">Account Role</div>
+                            <h5 class="fw-bold mb-0 text-primary">{{ ucfirst($user->role ?? 'Standard User') }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                        <div class="stat-card rounded-0 rounded-md-4 shadow-sm">
+                            <div class="stat-icon bg-success-subtle text-success">
+                                <i class="ti ti-calendar-event"></i>
+                            </div>
+                            <div class="text-muted small mb-1">Joined Date</div>
+                            <h5 class="fw-bold mb-0 text-primary">{{ $user->created_at->format('M d, Y') }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                        <div class="stat-card rounded-0 rounded-md-4 shadow-sm">
+                            <div class="stat-icon bg-warning-subtle text-warning">
+                                <i class="ti ti-wallet"></i>
+                            </div>
+                            <div class="text-muted small mb-1">Daily Limit</div>
+                            <h5 class="fw-bold mb-0 text-primary">₦{{ number_format((float)$user->limit, 2) }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <div class="stat-card rounded-0 rounded-md-4 shadow-sm">
+                            <div class="stat-icon bg-info-subtle text-info">
+                                <i class="ti ti-device-mobile"></i>
+                            </div>
+                            <div class="text-muted small mb-1">Identity Verified</div>
+                            <h5 class="fw-bold mb-0 text-primary">{{ $user->nin || $user->bvn ? 'Yes' : 'No' }}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Support Banner -->
+                <div class="mt-5">
+                    <div class="card border-0 rounded-0 rounded-md-4 overflow-hidden shadow-lg" style="background: linear-gradient(135deg, #198754 0%, #1a4d2e 100%);">
+                        <div class="card-body p-4 text-white">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 1rem; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ti ti-brand-whatsapp fs-1"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold mb-0">Need Rapid Assistance?</h4>
+                                        <p class="mb-0 opacity-75">Your dedicated account officer is just a message away.</p>
+                                    </div>
+                                </div>
+                                <a href="https://wa.me/2348064333983" target="_blank" class="btn btn-light rounded-pill px-4 fw-bold">
+                                    <i class="ti ti-brand-whatsapp me-2"></i> Contact Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILE DETAILS TAB -->
+            <div class="tab-pane fade" id="profile" role="tabpanel">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4">
+                    <div class="card-header bg-white border-0 py-4 px-4 rounded-0 rounded-top-md-4">
+                        <h4 class="fw-bold mb-0 text-primary d-flex align-items-center">
+                            <i class="ti ti-user-scan me-2 text-primary"></i> Personal Information
+                        </h4>
+                    </div>
+                    <div class="card-body p-4 pt-0">
+                        <div class="row g-0 g-md-4">
+                            <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                <div class="info-item">
+                                    <label class="text-muted small text-uppercase mb-1 fw-bold">Full Name</label>
+                                    <div class="fw-bold text-primary fs-14">{{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2 mt-md-0">
+                                <div class="info-item">
+                                    <label class="text-muted small text-uppercase mb-1 fw-bold">Email Address</label>
+                                    <div class="fw-bold text-primary fs-14 d-flex align-items-center gap-2">
+                                        {{ $user->email }}
+                                        <i class="ti ti-copy text-muted cursor-pointer btn-copy" data-text="{{ $user->email }}" title="Copy Email"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2 mt-md-0">
+                                <div class="info-item">
+                                    <label class="text-muted small text-uppercase mb-1 fw-bold">Phone Number</label>
+                                    <div class="fw-bold text-primary fs-14">{{ $user->phone_no ?: 'No provided' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2 mt-md-0">
+                                <div class="info-item">
+                                    <label class="text-muted small text-uppercase mb-1 fw-bold">Business Name</label>
+                                    <div class="fw-bold text-primary fs-14">{{ $user->business_name ?: 'No Business Set' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2 mt-md-0">
+                                <div class="info-item">
+                                    <label class="text-muted small text-uppercase mb-1 fw-bold">Origin/Location</label>
+                                    <div class="fw-bold text-primary fs-14">{{ $user->state ? $user->state . ' State' : 'Not Added' }}</div>
+                                    @if($user->lga)<small class="text-muted">LGA: {{ $user->lga }}</small>@endif
+                                </div>
+                            </div>
+                            <div class="col-12 mt-2 mt-md-0">
+                                <div class="info-item">
+                                    <label class="text-muted small text-uppercase mb-1 fw-bold">Full Address</label>
+                                    <div class="fw-bold text-primary fs-16">{{ $user->address ?: 'Complete your profile with a valid address.' }}</div>
                                 </div>
                             </div>
                         </div>
-
-                        <h4 class="fw-bold mt-3 mb-1 text-dark">{{ $user->first_name }} {{ $user->last_name }}</h4>
-                        <div class="text-muted small mb-3 d-flex align-items-center justify-content-center">
-                            <i class="ti ti-mail me-1"></i> {{ $user->email }}
-                        </div>
-                        
-                        <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
-                            <span class="badge badge-custom rounded-pill px-3 py-2 fw-semibold border border-white shadow-sm">
-                                <i class="ti ti-shield-check me-1"></i> {{ ucfirst($user->role ?? 'User') }}
-                            </span>
-                            @if($user->limit)
-                            <span class="badge bg-dark rounded-pill px-3 py-2 fw-semibold text-white border border-white shadow-sm" title="Daily Limit">
-                                <i class="ti ti-wallet me-1"></i> ₦{{ number_format((float)$user->limit, 2) }} Limit
-                            </span>
-                            @endif
-                        </div>
-
-                        <hr class="border-light mb-4">
-
-                        <!-- Action Buttons -->
-                        <div class="d-flex flex-column gap-3">
-                            <button class="btn btn-light settings-btn text-start d-flex align-items-center justify-content-between border" data-bs-toggle="modal" data-bs-target="#passwordModal">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-white shadow-sm d-inline-flex me-3" style="width: 38px; height: 38px;">
-                                        <i class="ti ti-lock"></i>
-                                    </div>
-                                    <span class="text-dark fw-medium">Change Password</span>
-                                </div>
-                                <i class="ti ti-chevron-right text-muted"></i>
+                        <div class="mt-4 text-end">
+                            <button class="btn btn-primary rounded-pill px-4 shadow-sm" style="background: var(--primary-gradient); border: none;">
+                                <i class="ti ti-edit me-1"></i> Edit Profile Details
                             </button>
-
-                            <button class="btn btn-light settings-btn text-start d-flex align-items-center justify-content-between border" data-bs-toggle="modal" data-bs-target="#pinModal">
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-white shadow-sm d-inline-flex me-3 text-danger" style="width: 38px; height: 38px;">
-                                        <i class="ti ti-key"></i>
-                                    </div>
-                                    <span class="text-dark fw-medium">Reset Transaction PIN</span>
-                                </div>
-                                <i class="ti ti-chevron-right text-muted"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN -->
-            <div class="col-xl-8 col-lg-7">
-                <div class="card border-0 shadow-sm rounded-4 h-100">
-                    <div class="card-header bg-white border-bottom border-light py-4 px-4 d-flex align-items-center">
-                        <div class="icon-circle me-3 shadow-sm bg-primary text-white" style="width: 45px; height: 45px; background: #e93c11 !important;">
-                            <i class="ti ti-user-scan"></i>
+            <!-- SECURITY TAB -->
+            <div class="tab-pane fade" id="security" role="tabpanel">
+                <div class="row g-0 g-md-4">
+                    <div class="col-12 col-md-6 mb-3 mb-md-0">
+                        <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
+                            <div class="card-body p-4">
+                                <div class="stat-icon bg-primary-subtle text-primary mb-3">
+                                    <i class="ti ti-lock"></i>
+                                </div>
+                                <h4 class="fw-bold mb-2">Login Password</h4>
+                                <p class="text-muted small mb-4">Manage your account security by updating your password regularly.</p>
+                                <button class="btn btn-light w-100 rounded-pill py-3 fw-bold border" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                                    Update Password <i class="ti ti-arrow-right ms-1"></i>
+                                </button>
+                            </div>
                         </div>
-                        <h4 class="fw-bold mb-0 text-dark">Personal Information</h4>
                     </div>
-
-                    <div class="card-body p-4">
-                        <div class="row g-4">
-                            <!-- Info Items -->
-                            <div class="col-12">
-                                <div class="info-card p-3 rounded-3 bg-light border">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-c-primary fs-3"><i class="ti ti-user"></i></div>
-                                        <div>
-                                            <div class="text-muted small text-uppercase fw-semibold mb-1">Full Name</div>
-                                            <div class="fw-bold text-primary fs-15">{{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}</div>
-                                        </div>
+                    <div class="col-12 col-md-6 mt-2 mt-md-0">
+                        <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100">
+                            <div class="card-body p-4">
+                                <div class="stat-icon bg-danger-subtle text-danger mb-3">
+                                    <i class="ti ti-key"></i>
+                                </div>
+                                <h4 class="fw-bold mb-2">Transaction PIN</h4>
+                                <p class="text-muted small mb-4">This PIN is required for every disbursement and payment in the app.</p>
+                                <button class="btn btn-light w-100 rounded-pill py-3 fw-bold border" data-bs-toggle="modal" data-bs-target="#pinModal">
+                                    Reset Transaction PIN <i class="ti ti-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 mt-4">
+                        <div class="card shadow-lg border-0 rounded-0 rounded-md-4">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-3">Login Sessions & Security</h5>
+                                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-4">
+                                    <div class="icon-circle bg-white shadow-sm rounded-circle">
+                                        <i class="ti ti-device-laptop text-primary"></i>
                                     </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-primary">Current Session</div>
+                                        <div class="text-muted small">IP: {{ request()->ip() }} • {{ request()->userAgent() }}</div>
+                                    </div>
+                                    <div class="status-badge verified small">Active</div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <div class="col-md-6">
-                                <div class="info-card p-3 rounded-3 bg-light border">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-c-primary fs-3"><i class="ti ti-mail"></i></div>
-                                        <div>
-                                            <div class="text-muted small text-uppercase fw-semibold mb-1">Email Address</div>
-                                            <div class="fw-bold text-primary fs-15">{{ $user->email ?: 'Not Provided' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="info-card p-3 rounded-3 bg-light border">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-c-primary fs-3"><i class="ti ti-phone"></i></div>
-                                        <div>
-                                            <div class="text-muted small text-uppercase fw-semibold mb-1">Phone Number</div>
-                                            <div class="fw-bold text-primary fs-15">{{ $user->phone_no ?: 'Not Provided' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="info-card p-3 rounded-3 bg-light border">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-c-primary fs-3"><i class="ti ti-briefcase"></i></div>
-                                        <div>
-                                            <div class="text-muted small text-uppercase fw-semibold mb-1">Business Name</div>
-                                            <div class="fw-bold text-primary fs-15">{{ $user->business_name ?: 'Not Provided' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="info-card p-3 rounded-3 bg-light border">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-c-primary fs-3"><i class="ti ti-map-pin"></i></div>
-                                        <div>
-                                            <div class="text-muted small text-uppercase fw-semibold mb-1">Location Details</div>
-                                            <div class="fw-bold text-primary fs-15">{{ $user->state ? $user->state . ' State' : 'State Not Provided' }}</div>
-                                            <div class="text-muted small mt-1">{{ $user->lga ? 'LGA: ' . $user->lga : 'LGA Not Provided' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="info-card p-3 rounded-3 bg-light border">
-                                    <div class="d-flex align-items-start">
-                                        <div class="mt-1 me-3 text-c-primary fs-3"><i class="ti ti-home"></i></div>
-                                        <div>
-                                            <div class="text-muted small text-uppercase fw-semibold mb-1">Full Address</div>
-                                            <div class="fw-bold text-primary fs-15" style="line-height: 1.5;">{{ $user->address ?: 'Address not provided. Please update your profile.' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Dedicated Contact Officer Section -->
-                            <div class="col-12 mt-4">
-                                <div class="p-4 rounded-3 border position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(25, 135, 84, 0.05) 0%, rgba(25, 135, 84, 0.15) 100%); border-color: #198754 !important;">
-                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 position-relative z-1">
-                                        <div class="d-flex align-items-center">
-                                            <div class="icon-circle shadow-sm bg-success text-white me-3" style="width: 50px; height: 50px;">
-                                                <i class="ti ti-brand-whatsapp fs-2"></i>
+            <!-- ACTIVITY TAB -->
+            <div class="tab-pane fade" id="activity" role="tabpanel">
+                <div class="card shadow-lg border-0 rounded-0 rounded-md-4">
+                    <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center rounded-0 rounded-top-md-4">
+                        <h4 class="fw-bold mb-0 text-primary">Recent Operations</h4>
+                        <button class="btn btn-sm btn-light rounded-pill px-3">View All</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Operation</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th class="pe-4">IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="p-2 bg-primary-subtle text-primary rounded-circle small"><i class="ti ti-login"></i></span>
+                                                <span class="fw-bold">User Login</span>
                                             </div>
-                                            <div>
-                                                <h5 class="fw-bold text-dark mb-1">Need help with your profile?</h5>
-                                                <p class="text-muted mb-0 small">Get in touch with our dedicated Account Officer directly on WhatsApp.</p>
+                                        </td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                        <td>{{ now()->format('M d, H:i') }}</td>
+                                        <td class="pe-4 text-muted">{{ request()->ip() }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="p-2 bg-info-subtle text-info rounded-circle small"><i class="ti ti-user-edit"></i></span>
+                                                <span class="fw-bold">Profile Update</span>
                                             </div>
-                                        </div>
-                                        <a href="https://wa.me/2348064333983" target="_blank" class="btn btn-success rounded-pill px-4 fw-semibold shadow-sm text-nowrap">
-                                            <i class="ti ti-brand-whatsapp me-2"></i> Contact Account Officer
-                                        </a>
-                                    </div>
-                                    <!-- Decorative Icon -->
-                                    <i class="ti ti-brand-whatsapp position-absolute text-success" style="font-size: 150px; right: -20px; bottom: -40px; opacity: 0.1; z-index: 0;"></i>
-                                </div>
-                            </div>
+                                        </td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                        <td>{{ now()->subHours(5)->format('M d, H:i') }}</td>
+                                        <td class="pe-4 text-muted">{{ request()->ip() }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -350,39 +507,33 @@
     <!-- MODALS -->
     
     <!-- Photo Modal -->
-    <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal fade" id="photoModal" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-custom shadow">
-                <div class="modal-header modal-header-custom align-items-center">
-                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center">
-                        <div class="icon-circle me-2 bg-primary-subtle text-primary" style="width: 32px; height: 32px; font-size: 1rem;">
-                            <i class="ti ti-camera"></i>
-                        </div>
-                        Update Profile Photo
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content modal-content-premium shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Change Profile Picture</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="photoUploadForm" action="{{ route('profile.photo') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body p-4 text-center">
-                        <div class="mb-4 d-none d-md-block" id="uploadPlaceholder">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(233,60,17,0.1);">
-                                <i class="ti ti-cloud-upload text-c-primary display-6"></i>
+                        <div class="mb-4" id="uploadPlaceholder">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px; background: rgba(233,60,17,0.05);">
+                                <i class="ti ti-photo-plus text-primary fs-1"></i>
                             </div>
-                            <h6 class="fw-bold mt-2 mb-1">Select a new photo</h6>
-                            <p class="text-muted small mb-0">Supported formats: JPG, PNG, WEBP. Max size: 2MB.</p>
+                            <h6 class="fw-bold mt-3 mb-1">Pick a Face</h6>
+                            <p class="text-muted small">JPG, WEBP or PNG. Ideal size: 400x400px.</p>
                         </div>
                         
-                        <input type="file" id="photoInput" name="photo" class="form-control mb-3" accept="image/*" required>
+                        <input type="file" id="photoInput" name="photo" class="form-control" accept="image/*" required>
 
-                        <!-- Cropper Container -->
-                        <div id="cropperContainer" class="d-none mt-3" style="max-height: 400px; width: 100%; overflow: hidden;">
-                            <img id="cropperImage" src="" style="max-width: 100%; display: block;">
+                        <div id="cropperContainer" class="d-none mt-3" style="max-height: 400px; width: 100%; border-radius: 1rem; overflow: hidden;">
+                            <img id="cropperImage" src="" style="max-width: 100%;">
                         </div>
                     </div>
-                    <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" id="cropAndUploadBtn" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: #e93c11; border-color: #e93c11;" disabled>Crop & Upload Photo</button>
+                    <div class="modal-footer border-0 pb-4 justify-content-center">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Later</button>
+                        <button type="button" id="cropAndUploadBtn" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background: var(--primary-gradient); border: none;" disabled>Save Changes</button>
                     </div>
                 </form>
             </div>
@@ -390,47 +541,44 @@
     </div>
 
     <!-- Password Modal -->
-    <div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="passwordModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-custom shadow">
-                <div class="modal-header modal-header-custom align-items-center">
-                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center">
-                        <div class="icon-circle me-2 bg-primary-subtle text-primary" style="width: 32px; height: 32px; font-size: 1rem;">
-                            <i class="ti ti-lock"></i>
-                        </div>
-                        Reset Password
+            <div class="modal-content modal-content-premium shadow-lg">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="ti ti-lock text-primary"></i> Change Password
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="{{ route('password.update') }}">
                     @csrf
                     @method('PUT')
-                    <div class="modal-body p-4">
+                    <div class="modal-body p-4 pt-0">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-dark">Current Password</label>
-                            <div class="input-group input-group-custom border rounded-3 overflow-hidden">
-                                <span class="input-group-text"><i class="ti ti-lock-open"></i></span>
-                                <input type="password" name="current_password" class="form-control" required placeholder="Enter current password">
+                            <label class="form-label fw-bold text-muted small">Current Password</label>
+                            <div class="input-group border rounded-pill overflow-hidden bg-light px-3">
+                                <span class="input-group-text bg-transparent border-0"><i class="ti ti-lock-open"></i></span>
+                                <input type="password" name="current_password" class="form-control bg-transparent border-0" required placeholder="••••••••">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-dark">New Password</label>
-                            <div class="input-group input-group-custom border rounded-3 overflow-hidden">
-                                <span class="input-group-text"><i class="ti ti-lock"></i></span>
-                                <input type="password" name="password" class="form-control" required placeholder="Enter new password">
+                            <label class="form-label fw-bold text-muted small">New Password</label>
+                            <div class="input-group border rounded-pill overflow-hidden bg-light px-3">
+                                <span class="input-group-text bg-transparent border-0"><i class="ti ti-lock"></i></span>
+                                <input type="password" name="password" class="form-control bg-transparent border-0" required placeholder="Minimum 8 characters">
                             </div>
                         </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark">Confirm Password</label>
-                            <div class="input-group input-group-custom border rounded-3 overflow-hidden">
-                                <span class="input-group-text"><i class="ti ti-lock"></i></span>
-                                <input type="password" name="password_confirmation" class="form-control" required placeholder="Confirm new password">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Confirm New Password</label>
+                            <div class="input-group border rounded-pill overflow-hidden bg-light px-3">
+                                <span class="input-group-text bg-transparent border-0"><i class="ti ti-lock"></i></span>
+                                <input type="password" name="password_confirmation" class="form-control bg-transparent border-0" required placeholder="Verify password">
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer modal-footer-custom bg-light">
-                        <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: #e93c11; border-color: #e93c11;">Update Password</button>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4" style="background: var(--primary-gradient); border: none;">Save Password</button>
                     </div>
                 </form>
             </div>
@@ -438,50 +586,42 @@
     </div>
 
     <!-- PIN Modal -->
-    <div class="modal fade" id="pinModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="pinModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-custom shadow">
-                <div class="modal-header modal-header-custom align-items-center">
-                    <h5 class="modal-title fw-bold text-danger d-flex align-items-center">
-                        <div class="icon-circle me-2 bg-danger-subtle text-danger" style="width: 32px; height: 32px; font-size: 1rem;">
-                            <i class="ti ti-key"></i>
-                        </div>
-                        Reset Transaction PIN
+            <div class="modal-content modal-content-premium shadow-lg">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2">
+                        <i class="ti ti-shield-security"></i> Reset Transaction PIN
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="{{ route('profile.pin') }}">
                     @csrf
-                    <div class="modal-body p-4">
-                        <div class="alert alert-warning d-flex align-items-center mb-4 rounded-3 border-0 bg-warning-subtle text-dark" role="alert">
-                            <i class="ti ti-alert-triangle fs-3 text-warning me-3"></i>
-                            <div class="small fw-medium">This PIN is used to authorize your transactions. Keep it safe and secure!</div>
+                    <div class="modal-body p-4 pt-0">
+                        <div class="alert alert-danger bg-danger-subtle border-0 rounded-4 text-danger small mb-4">
+                            <strong>Careful!</strong> This PIN is your ultimate authorization for spending. Never share it with anyone.
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-dark">Current Password</label>
-                            <div class="input-group input-group-custom border rounded-3 overflow-hidden">
-                                <span class="input-group-text"><i class="ti ti-lock-open"></i></span>
-                                <input type="password" name="current_password" class="form-control" required placeholder="Enter login password">
+                            <label class="form-label fw-bold text-muted small">Confirm Account Password</label>
+                            <div class="input-group border rounded-pill overflow-hidden bg-light px-3">
+                                <span class="input-group-text bg-transparent border-0"><i class="ti ti-lock-access"></i></span>
+                                <input type="password" name="current_password" class="form-control bg-transparent border-0" required placeholder="Your login password">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold text-dark">New PIN (5 digits)</label>
-                            <div class="input-group input-group-custom border rounded-3 overflow-hidden">
-                                <span class="input-group-text"><i class="ti ti-dialpad"></i></span>
-                                <input type="password" name="pin" maxlength="5" pattern="\d{5}" class="form-control" required placeholder="*****" inputmode="numeric">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold text-muted small">New 5-Digit PIN</label>
+                                <input type="password" name="pin" maxlength="5" pattern="\d{5}" class="form-control rounded-pill bg-light border-0 text-center fs-14 fw-bold" required placeholder="•••••" inputmode="numeric">
                             </div>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark">Confirm PIN</label>
-                            <div class="input-group input-group-custom border rounded-3 overflow-hidden">
-                                <span class="input-group-text"><i class="ti ti-dialpad"></i></span>
-                                <input type="password" name="pin_confirmation" maxlength="5" pattern="\d{5}" class="form-control" required placeholder="*****" inputmode="numeric">
+                            <div class="col-6">
+                                <label class="form-label fw-bold text-muted small">Repeat PIN</label>
+                                <input type="password" name="pin_confirmation" maxlength="5" pattern="\d{5}" class="form-control rounded-pill bg-light border-0 text-center fs-14 fw-bold" required placeholder="•••••" inputmode="numeric">
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer modal-footer-custom bg-light">
-                        <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">Update PIN</button>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4">Activate New PIN</button>
                     </div>
                 </form>
             </div>
@@ -502,93 +642,76 @@
         const form = document.getElementById('photoUploadForm');
         const uploadPlaceholder = document.getElementById('uploadPlaceholder');
 
+        // Copy to clipboard utility
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+            btn.onclick = function() {
+                const text = this.getAttribute('data-text');
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalIcon = this.className;
+                    this.className = 'ti ti-check text-success';
+                    setTimeout(() => this.className = originalIcon, 2000);
+                });
+            }
+        });
+
         // Initialize Cropper when file is selected
-        photoInput.addEventListener('change', function (e) {
-            const files = e.target.files;
-            if (files && files.length > 0) {
-                const file = files[0];
-                const url = URL.createObjectURL(file);
-                
-                cropperImage.src = url;
-                cropperContainer.classList.remove('d-none');
-                if(uploadPlaceholder) uploadPlaceholder.classList.add('d-none');
-                uploadBtn.disabled = false;
+        if(photoInput) {
+            photoInput.addEventListener('change', function (e) {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+                    const url = URL.createObjectURL(file);
+                    
+                    cropperImage.src = url;
+                    cropperContainer.classList.remove('d-none');
+                    if(uploadPlaceholder) uploadPlaceholder.classList.add('d-none');
+                    uploadBtn.disabled = false;
 
-                if (cropper) {
-                    cropper.destroy();
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+
+                    cropper = new Cropper(cropperImage, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                    });
                 }
+            });
+        }
 
-                cropper = new Cropper(cropperImage, {
-                    aspectRatio: 1, // Enforce 1:1 aspect ratio ideal for circular profile pictures
-                    viewMode: 1,    // Restrict the crop box to not exceed the size of the canvas
-                    autoCropArea: 0.8,
-                });
-            }
-        });
+        const styleCircle = document.createElement('style');
+        styleCircle.innerHTML = `.cropper-view-box, .cropper-face { border-radius: 50%; }`;
+        document.head.appendChild(styleCircle);
 
-        // Add circle overlay CSS for Cropper to visualize the crop area as a circle
-        const style = document.createElement('style');
-        style.innerHTML = `
-            .cropper-view-box,
-            .cropper-face {
-              border-radius: 50%;
-            }
-        `;
-        document.head.appendChild(style);
+        if(uploadBtn) {
+            uploadBtn.addEventListener('click', function () {
+                if (!cropper) return;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                this.disabled = true;
 
-        // Handle the crop and upload action
-        uploadBtn.addEventListener('click', function () {
-            if (!cropper) return;
+                cropper.getCroppedCanvas({ width: 400, height: 400 }).toBlob((blob) => {
+                    const formData = new FormData(form);
+                    formData.set('photo', blob, 'profile.jpg');
 
-            // Show loading state
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Uploading...';
-            this.disabled = true;
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.ok ? window.location.reload() : alert('Failed'))
+                    .catch(() => alert('Error uploading profile'));
+                }, 'image/jpeg', 0.9);
+            });
+        }
 
-            // Get the cropped canvas
-            cropper.getCroppedCanvas({
-                width: 400,
-                height: 400,
-            }).toBlob((blob) => {
-                const formData = new FormData(form);
-                // Override the chosen file with the cropped blob representation
-                formData.set('photo', blob, 'profile.jpg');
-
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        throw new Error('Upload failed');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred during upload. Please try again.');
-                    this.innerHTML = 'Crop & Upload Photo';
-                    this.disabled = false;
-                });
-            }, 'image/jpeg', 0.9);
-        });
-
-        // Reset the modal when it gets closed
         const photoModal = document.getElementById('photoModal');
         if(photoModal) {
             photoModal.addEventListener('hidden.bs.modal', function () {
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
+                if (cropper) cropper.destroy();
                 photoInput.value = '';
                 cropperContainer.classList.add('d-none');
-                cropperImage.src = '';
                 uploadBtn.disabled = true;
-                uploadBtn.innerHTML = 'Crop & Upload Photo';
                 if(uploadPlaceholder) uploadPlaceholder.classList.remove('d-none');
             });
         }

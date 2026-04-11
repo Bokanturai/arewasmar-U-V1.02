@@ -17,6 +17,7 @@
                         ['route' => route('withdraw.index'), 'icon' => 'ti-credit-card', 'color' => 'danger', 'name' => 'Withdraw', 'hot' => true],
                         ['route' => route('gift-card.index'), 'icon' => 'ti-gift', 'color' => 'info', 'name' => 'Gift Card', 'hot' => true],
                         ['route' => route('electricity'), 'icon' => 'ti-bolt', 'color' => 'danger', 'name' => 'Electricity'],
+                        ['route' => route('cable'), 'icon' => 'ti-device-tv', 'color' => 'success', 'name' => 'Cable TV', 'hot' => true],
                         ['route' => route('education'), 'icon' => 'ti-school', 'color' => 'success', 'name' => 'Education'],
                         ['route' => route('jamb'), 'icon' => 'ti-certificate', 'color' => 'secondary', 'name' => 'Jamb Pin'],
                         ['route' => route('bvn-crm'), 'icon' => 'ti-users', 'color' => 'info', 'name' => 'CRM', 'hot' => true],

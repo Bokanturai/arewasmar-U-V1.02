@@ -2,7 +2,7 @@
     <title>Arewa Smart - Transactions</title>
 
     <div class="page-body">
-        <div class="container-fluid">
+        <div class="container-fluid px-0 px-md-3">
             <!-- Page Header -->
             <div class="page-title mb-3">
                 <div class="row">
@@ -15,13 +15,6 @@
                 </div>
             </div>
 
-            <!-- Floating AI Assistant Button (Bottom Right) -->
-            <button id="globalAiSummarize"
-                class="btn rounded-circle shadow-lg position-fixed d-flex align-items-center justify-content-center transition-all hover-translate-y"
-                style="bottom: 30px; right: 30px; width: 60px; height: 60px; z-index: 1050; border: 2px solid white; background: linear-gradient(135deg, #4285F4 0%, #9B72CB 50%, #D96570 100%); color: white;"
-                title="AI Transaction Assistant">
-                <i class="bi bi-stars fs-2"></i>
-            </button>
 
             <!-- Loading Indicator Overlay (Removed in favor of internal modal loading) -->
             <div id="globalAiInsightsArea" class="d-none"></div>
@@ -59,80 +52,136 @@
                 </div>
             </div>
 
-            <div class="row">
-                <!-- Transaction History -->
-                <div class="col-12 col-xl-12 mb-4">
-                    <div class="card shadow-sm border-0 rounded-3 h-100">
-                        <div
-                            class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Transactions</h5>
-                            <span class="badge bg-light text-primary fw-semibold">Arewa Smart</span>
+            <!-- Transaction Statistics Cards -->
+            <div class="row g-0 g-md-4 mb-3 mb-md-4">
+                <div class="col-12 col-md-4 mb-2 mb-md-0">
+                    <div class="card border-0 shadow-sm rounded-0 rounded-md-4 bg-primary text-white overflow-hidden position-relative hover-scale transition-all h-100 shadow-hover">
+                        <div class="card-body p-4 position-relative" style="z-index: 2;">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-white bg-opacity-25 rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-wallet2 fs-15"></i>
+                                </div>
+                                <h6 class="mb-0 fw-bold">Total Credits</h6>
+                            </div>
+                            <h3 class="fw-bold mb-1">₦{{ number_format($transactions->whereIn('type', ['credit', 'refund', 'bonus', 'manual_credit'])->sum('amount'), 2) }}</h3>
+                            <p class="mb-0 small opacity-75">All successful inflows</p>
                         </div>
-                        <div class="card-body">
+                        <div class="position-absolute bottom-0 end-0 opacity-10" style="transform: translate(20%, 20%);">
+                            <i class="bi bi-graph-up-arrow fs-1" style="font-size: 8rem !important;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-2 mb-md-0">
+                    <div class="card border-0 shadow-sm rounded-0 rounded-md-4 bg-white overflow-hidden position-relative hover-scale transition-all h-100 shadow-hover border-top border-4 border-danger">
+                        <div class="card-body p-4 position-relative" style="z-index: 2;">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-danger-subtle text-danger rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-cart-dash fs-15"></i>
+                                </div>
+                                <h6 class="mb-0 fw-bold text-muted">Total Debits</h6>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-danger">₦{{ number_format($transactions->whereIn('type', ['debit', 'manual_debit'])->sum('amount'), 2) }}</h3>
+                            <p class="mb-0 small text-muted">Total spending volume</p>
+                        </div>
+                        <div class="position-absolute bottom-0 end-0 opacity-10" style="transform: translate(20%, 20%);">
+                            <i class="bi bi-graph-down-arrow fs-1" style="font-size: 8rem !important;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4 mb-2 mb-md-0">
+                    <div class="card border-0 shadow-sm rounded-0 rounded-md-4 bg-white overflow-hidden position-relative hover-scale transition-all border-bottom border-4 border-warning h-100 shadow-hover">
+                        <div class="card-body p-4 position-relative" style="z-index: 2;">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-warning-subtle text-warning rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-clock-history fs-15"></i>
+                                </div>
+                                <h6 class="mb-0 fw-bold text-muted">Recent Activity</h6>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-dark">{{ $transactions->total() }}</h3>
+                            <p class="mb-0 small text-muted">Total movements recorded</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <!-- Filter Form -->
-                            <form class="row g-3 mb-4" method="GET" action="{{ route('transactions') }}">
-                                <div class="col-12 col-md-3">
-                                    <label class="form-label small fw-bold text-muted">Transaction Type</label>
-                                    <select class="form-select" name="type">
-                                        <option value="">All Types</option>
-                                        <option value="credit" {{ request('type') == 'credit' ? 'selected' : '' }}>Credit
-                                        </option>
-                                        <option value="debit" {{ request('type') == 'debit' ? 'selected' : '' }}>Debit
-                                        </option>
-                                        <option value="refund" {{ request('type') == 'refund' ? 'selected' : '' }}>Refund
-                                        </option>
-                                    </select>
+            <!-- Unified Search & Filter Bar Section -->
+            <div class="row g-0 g-md-4 mb-3 mb-md-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-0 rounded-md-4 overflow-hidden search-bar-container">
+                        <div class="card-body p-2 px-3">
+                            <form method="GET" action="{{ route('transactions') }}" class="row g-2 align-items-center" onsubmit="document.getElementById('filterOverlay').classList.remove('d-none')">
+                                <div class="col-12 col-md-4">
+                                    <div class="input-group input-group-modern">
+                                        <span class="input-group-text bg-transparent border-0 pe-0">
+                                            <i class="bi bi-search text-muted"></i>
+                                        </span>
+                                        <input type="text" name="search" class="form-control border-0 shadow-none ps-2" 
+                                            placeholder="Search Title, Amount..." value="{{ request('search') }}">
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-3">
-                                    <label class="form-label small fw-bold text-muted">Service Type</label>
-                                    <select class="form-select" name="service_type">
-                                        <option value="">All Services</option>
-                                        <option value="Airtime" {{ request('service_type') == 'Airtime' ? 'selected' : '' }}>Airtime</option>
-                                        <option value="Data" {{ request('service_type') == 'Data' ? 'selected' : '' }}>
-                                            Data</option>
-                                        <option value="Electricity" {{ request('service_type') == 'Electricity' ? 'selected' : '' }}>Electricity</option>
-                                        <option value="Cable" {{ request('service_type') == 'Cable' ? 'selected' : '' }}>
-                                            Cable TV</option>
-                                        <option value="Education" {{ request('service_type') == 'Education' ? 'selected' : '' }}>Education (WAEC/NECO/JAMB)</option>
-                                        <option value="Funding" {{ request('service_type') == 'Funding' ? 'selected' : '' }}>Wallet Funding</option>
-                                        <option value="Funding" {{ request('service_type') == 'Funding' ? 'selected' : '' }}>Wallet Debit</option>
-                                        <option value="VNIN_TO_NIBSS" {{ request('service_type') == 'VNIN_TO_NIBSS' ? 'selected' : '' }}>VNIN TO NIBSS</option>
-                                        <option value="BVN_SEARCH" {{ request('service_type') == 'BVN_SEARCH' ? 'selected' : '' }}>BVN Search</option>
-                                        <option value="BVN_MODIFICATION" {{ request('service_type') == 'BVN_MODIFICATION' ? 'selected' : '' }}>BVN Modification</option>
-                                        <option value="CRM" {{ request('service_type') == 'CRM' ? 'selected' : '' }}>CRM
-                                        </option>
-                                        <option value="BVN_USER" {{ request('service_type') == 'BVN_USER' ? 'selected' : '' }}>BVN User</option>
-                                        <option value="APPROVAL_REQUEST" {{ request('service_type') == 'APPROVAL_REQUEST' ? 'selected' : '' }}>Approval Request</option>
-                                        <option value="AFFIDAVIT" {{ request('service_type') == 'AFFIDAVIT' ? 'selected' : '' }}>Affidavit</option>
-                                        <option value="NIN_SELFSERVICE" {{ request('service_type') == 'NIN_SELFSERVICE' ? 'selected' : '' }}>NIN Self Service</option>
-                                        <option value="NIN_VALIDATION" {{ request('service_type') == 'NIN_VALIDATION' ? 'selected' : '' }}>NIN Validation</option>
-                                        <option value="IPE" {{ request('service_type') == 'IPE' ? 'selected' : '' }}>IPE
-                                        </option>
-                                        <option value="NIN_MODIFICATION" {{ request('service_type') == 'NIN_MODIFICATION' ? 'selected' : '' }}>NIN Modification</option>
-                                        <option value="TIN_INDIVIDUAL" {{ request('service_type') == 'TIN_INDIVIDUAL' ? 'selected' : '' }}>TIN Individual</option>
-                                        <option value="TIN_CORPORATE" {{ request('service_type') == 'TIN_CORPORATE' ? 'selected' : '' }}>TIN Corporate</option>
-                                        <option value="CAC" {{ request('service_type') == 'CAC' ? 'selected' : '' }}>CAC
-                                        </option>
-                                        <option value="not_selected" {{ request('service_type') == 'not_selected' ? 'selected' : '' }}>Not Selected</option>
-                                    </select>
+                                
+                                <div class="col-6 col-md-2">
+                                    <div class="d-flex align-items-center border-start ps-3 h-100">
+                                        <i class="bi bi-sliders2-vertical text-muted me-2"></i>
+                                        <select class="form-select border-0 shadow-none bg-transparent py-0" name="type">
+                                            <option value="">All Types</option>
+                                            <option value="credit" {{ request('type') == 'credit' ? 'selected' : '' }}>Credit</option>
+                                            <option value="debit" {{ request('type') == 'debit' ? 'selected' : '' }}>Debit</option>
+                                            <option value="refund" {{ request('type') == 'refund' ? 'selected' : '' }}>Refund</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-2">
-                                    <label class="form-label small fw-bold text-muted">From Date</label>
-                                    <input type="date" class="form-control" name="date_from"
-                                        value="{{ request('date_from') }}">
+
+                                <div class="col-6 col-md-2">
+                                    <div class="d-flex align-items-center border-start ps-3 h-100">
+                                        <i class="bi bi-grid-fill text-muted me-2"></i>
+                                        <select class="form-select border-0 shadow-none bg-transparent py-0" name="status">
+                                            <option value="">Statuses</option>
+                                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                            <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-2">
-                                    <label class="form-label small fw-bold text-muted">To Date</label>
-                                    <input type="date" class="form-control" name="date_to"
-                                        value="{{ request('date_to') }}">
-                                </div>
-                                <div class="col-12 col-md-2 d-flex align-items-end">
-                                    <button class="btn btn-primary w-100 fw-semibold" type="submit">
-                                        <i class="bi bi-filter me-1"></i> Filter
+
+                                <div class="col-12 col-md-4 d-flex align-items-center justify-content-md-end gap-2">
+                                    <button type="button" class="btn btn-light rounded-pill px-3 shadow-none border d-flex align-items-center gap-2 transition-all hover-translate-y" 
+                                        id="searchAiBtn" title="Ask AI about Date">
+                                        <i class="bi bi-stars text-primary"></i>
+                                        <span class="small fw-semibold text-muted d-none d-lg-inline">Ask AI</span>
                                     </button>
+
+                                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: #F26522; border-color: #F26522;">
+                                        <i class="bi bi-funnel"></i>
+                                    </button>
+
+                                    <a href="{{ route('transactions') }}" class="btn btn-outline-light text-muted border border-secondary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </a>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction History Table Card -->
+            <div class="row g-0 g-md-4 position-relative">
+                <!-- Loading Overlay -->
+                <div id="filterOverlay" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center border-0 rounded-4" style="z-index: 10; background: rgba(255,255,255,0.7); backdrop-filter: blur(2px);">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-2"></div>
+                        <p class="small fw-bold text-primary mb-0">Updating Records...</p>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 rounded-0 rounded-md-4 overflow-hidden">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3 rounded-0 rounded-top-md-4">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-receipt me-2"></i>Transaction Details</h5>
+                            <span class="badge bg-white bg-opacity-25 text-white fw-semibold rounded-pill px-3">Arewa Smart</span>
+                        </div>
+                        <div class="card-body">
 
                             <!-- Transactions Table -->
                             <div class="table-responsive">
@@ -184,10 +233,19 @@
                                                     {{ in_array($transaction->type, ['credit', 'refund', 'bonus', 'manual_credit']) ? '+' : '-' }}₦{{ number_format($transaction->amount, 2) }}
                                                 </td>
                                                 <td class="text-center">
-                                                    <span
-                                                        class="badge bg-{{ $transaction->status == 'completed' || $transaction->status == 'successful' ? 'success' : ($transaction->status == 'failed' ? 'danger' : 'warning') }}-subtle text-{{ $transaction->status == 'completed' || $transaction->status == 'successful' ? 'success' : ($transaction->status == 'failed' ? 'danger' : 'warning') }} fw-semibold">
-                                                        {{ ucfirst($transaction->status) }}
-                                                    </span>
+                                                    @if(in_array($transaction->status, ['completed', 'successful']))
+                                                        <span class="badge bg-success-subtle text-success fw-bold px-3 py-2 rounded-pill badge-glass">
+                                                            <i class="bi bi-check-circle-fill me-1"></i> Success
+                                                        </span>
+                                                    @elseif($transaction->status == 'failed')
+                                                        <span class="badge bg-danger-subtle text-danger fw-bold px-3 py-2 rounded-pill badge-glass">
+                                                            <i class="bi bi-x-circle-fill me-1"></i> Failed
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-warning-subtle text-warning fw-bold px-3 py-2 rounded-pill badge-glass">
+                                                            <i class="bi bi-clock-history me-1"></i> {{ ucfirst($transaction->status) }}
+                                                        </span>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty
@@ -390,8 +448,7 @@
         }
 
         // --- GLOBAL AI ANALYZER ---
-        document.getElementById('globalAiSummarize')?.addEventListener('click', function () {
-            const btn = this;
+        const triggerGlobalAi = function () {
             const globalModal = new bootstrap.Modal(document.getElementById('globalAiModal'));
             const globalContent = document.getElementById('globalChatContent');
 
@@ -400,8 +457,13 @@
             globalContent.innerHTML = ''; // Start fresh
             addGlobalBubble('ai', '<div class="d-flex align-items-center gap-2 text-primary fw-bold"><div class="spinner-border spinner-border-sm"></div> Analysing Activity...</div>');
 
-            // Extract visible context
-            let txSummary = "Summarize my activity from these transactions:\n";
+            // Extract visible stats and context
+            const totalCredits = document.querySelector('.bg-primary h3')?.innerText || '₦0.00';
+            const totalDebits = document.querySelector('.text-danger h3')?.innerText || '₦0.00';
+            const activityCount = document.querySelector('.text-dark h3')?.innerText || '0';
+
+            let txSummary = `My current dashboard shows:\n- Total Credits: ${totalCredits}\n- Total Debits: ${totalDebits}\n- Total Movements: ${activityCount} record(s)\n\nSummarize my activity from these specific transactions:\n`;
+            
             document.querySelectorAll('.transaction-row').forEach(row => {
                 const desc = row.querySelector('.fw-medium').innerText;
                 const amt = row.querySelector('.fw-bold').innerText;
@@ -431,7 +493,10 @@
                     globalContent.innerHTML = '';
                     addGlobalBubble('ai', '❌ Network error.');
                 });
-        });
+        };
+
+        document.getElementById('globalAiSummarize')?.addEventListener('click', triggerGlobalAi);
+        document.getElementById('searchAiBtn')?.addEventListener('click', triggerGlobalAi);
 
         function submitGlobalQuery() {
             const input = document.getElementById('globalAiQuestion');

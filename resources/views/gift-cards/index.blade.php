@@ -394,36 +394,6 @@
             letter-spacing: -0.5px;
         }
 
-        /* Responsive Layout */
-        @media (max-width: 1199px) {
-            .form-wrapper-responsive,
-            .history-wrapper-responsive {
-                position: relative;
-                width: 100vw !important;
-                margin-left: calc(-50vw + 50%);
-            }
-            .form-wrapper-responsive .card,
-            .history-wrapper-responsive .card {
-                border-radius: 0 !important;
-                border-left: 0 !important;
-                border-right: 0 !important;
-            }
-            .history-wrapper-responsive {
-                height: auto !important;
-                min-height: 55vh !important;
-            }
-            .history-wrapper-responsive .card {
-                height: auto !important;
-                display: block !important;
-                flex-direction: unset !important;
-            }
-            .history-wrapper-responsive .card-body {
-                flex: unset !important;
-                overflow-y: visible !important;
-            }
-        }
-
-        /* ── Pagination Styling ─────────────────────────── */
         .pagination {
             justify-content: center;
             margin-top: 1.5rem;
@@ -467,10 +437,85 @@
             padding: 1.5rem;
             border-top: 1px solid #f1f5f9;
         }
+
+        /* ── Desktop Filter Styling ───────────────────── */
+        .filter-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .filter-input-wrapper {
+            background: #f8f9fa;
+            border: 1px solid #f1f5f9;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            height: 45px;
+            transition: all 0.2s;
+        }
+        .filter-input-wrapper:focus-within {
+            background: #ffffff;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+        .filter-input-wrapper i {
+            color: #64748b;
+            font-size: 1rem;
+            margin-right: 8px;
+        }
+        .filter-input-wrapper input, 
+        .filter-input-wrapper select {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            font-weight: 500;
+            color: #334155;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .filter-input-wrapper input::placeholder {
+            color: #94a3b8;
+        }
+        .btn-filter-action {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            background: #f76b2c;
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-filter-action:hover {
+            background: #e65a1d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(247, 107, 44, 0.3);
+            color: white;
+        }
+        .btn-filter-reset {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-filter-reset:hover {
+            background: #e2e8f0;
+            color: #334155;
+        }
     </style>
 
     {{-- Main Content --}}
-    <div class="container-fluid mb-4 mt-4">
+    <div class="container-fluid px-0 px-md-3 mb-4 mt-4">
         
         {{-- Header Section --}}
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
@@ -495,43 +540,108 @@
             </div>
         </div>
 
+        {{-- Search & Filter Section --}}
+        <div class="mb-4">
+            <div class="filter-card p-3 p-md-4">
+                <form action="{{ route('gift-card.index') }}" method="GET" class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="flex-grow-1 flex-basis-100 flex-basis-md-0" style="min-width: 250px;">
+                        <div class="filter-input-wrapper">
+                            <i class="ti ti-search"></i>
+                            <input type="text" name="search" placeholder="Search Title, Amount..." value="{{ request('search') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="flex-grow-1 flex-md-grow-0" style="min-width: 140px; width: auto;">
+                        <div class="filter-input-wrapper">
+                            <i class="ti ti-adjustments-horizontal"></i>
+                            <select name="style">
+                                <option value="">All Types</option>
+                                <option value="birthday" {{ request('style') == 'birthday' ? 'selected' : '' }}>Birthday</option>
+                                <option value="wedding" {{ request('style') == 'wedding' ? 'selected' : '' }}>Wedding</option>
+                                <option value="anniversary" {{ request('style') == 'anniversary' ? 'selected' : '' }}>Anniversary</option>
+                                <option value="general" {{ request('style') == 'general' ? 'selected' : '' }}>General</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1 flex-md-grow-0" style="min-width: 140px; width: auto;">
+                        <div class="filter-input-wrapper">
+                            <i class="ti ti-chart-dots"></i>
+                            <select name="status">
+                                <option value="">Statuses</option>
+                                <option value="unused" {{ request('status') == 'unused' ? 'selected' : '' }}>Active</option>
+                                <option value="used" {{ request('status') == 'used' ? 'selected' : '' }}>Redeemed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1 flex-md-grow-0" style="min-width: 140px; width: auto;">
+                        <div class="filter-input-wrapper">
+                            <i class="ti ti-calendar"></i>
+                            <input type="date" name="created_from" value="{{ request('created_from') }}" title="Created From">
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1 flex-md-grow-0" style="min-width: 140px; width: auto;">
+                        <div class="filter-input-wrapper">
+                            <i class="ti ti-calendar-event"></i>
+                            <input type="date" name="created_to" value="{{ request('created_to') }}" title="Created To">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 ms-auto pt-2 pt-md-0">
+                        <button type="submit" class="btn-filter-action flex-grow-1 flex-md-grow-0" title="Apply Filters">
+                            <i class="ti ti-filter fs-14"></i>
+                        </button>
+                        <a href="{{ route('gift-card.index') }}" class="btn-filter-reset flex-grow-1 flex-md-grow-0" title="Reset Filters">
+                            <i class="ti ti-rotate fs-14"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @php
+            $isFiltered = request()->anyFilled(['search', 'style', 'status', 'created_from', 'created_to', 'redeemed_from', 'redeemed_to']);
+        @endphp
+
         {{-- Stats Grid --}}
-        <div class="form-wrapper-responsive mb-4">
-            <div class="row g-3">
-                <div class="col-md-6 col-xl-4">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden stats-card-gradient-1">
-                        <div class="card-body p-4 d-flex align-items-center">
-                            <div class="avatar avatar-lg bg-primary rounded-circle me-3 flex-shrink-0 shadow-sm" style="width: 56px; height: 56px;">
-                                <i class="ti ti-gift text-white fs-3"></i>
+        <div class="mb-4">
+            <div class="row g-0 g-md-4">
+                <div class="col-md-6 col-xl-4 mb-2 mb-md-0">
+                    <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100 overflow-hidden stats-card-gradient-1">
+                        <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
+                            <div class="avatar avatar-lg bg-primary rounded-circle mb-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                                <i class="ti ti-gift text-white fs-2"></i>
                             </div>
                             <div>
-                                <p class="text-muted mb-0 small fw-bold text-uppercase letter-spacing-1">Created Cards</p>
+                                <p class="text-muted mb-1 small fw-bold text-uppercase letter-spacing-1">Created Cards</p>
                                 <h3 class="mb-0 fw-black text-dark">{{ number_format($createdCards->count()) }}</h3>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 col-xl-4">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden stats-card-gradient-2">
-                        <div class="card-body p-4 d-flex align-items-center">
-                            <div class="avatar avatar-lg bg-success rounded-circle me-3 flex-shrink-0 shadow-sm" style="width: 56px; height: 56px;">
-                                <i class="ti ti-circle-check text-white fs-15"></i>
+                <div class="col-md-6 col-xl-4 mb-2 mb-md-0">
+                    <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100 overflow-hidden stats-card-gradient-2">
+                        <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
+                            <div class="avatar avatar-lg bg-success rounded-circle mb-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                                <i class="ti ti-circle-check text-white fs-2"></i>
                             </div>
                             <div>
-                                <p class="text-muted mb-0 small fw-bold text-uppercase letter-spacing-1">Redeemed Card Value</p>
+                                <p class="text-muted mb-1 small fw-bold text-uppercase letter-spacing-1">Redeemed Card Value</p>
                                 <h3 class="mb-0 fw-black text-success">₦{{ number_format($redeemedCards->sum('amount'), 0) }}</h3>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-12 col-xl-4">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden stats-card-gradient-3">
-                        <div class="card-body p-4 d-flex align-items-center">
-                            <div class="avatar avatar-lg bg-info rounded-circle me-3 flex-shrink-0 shadow-sm" style="width: 56px; height: 56px;">
-                                <i class="ti ti-wallet text-white fs-3"></i>
+                    <div class="card shadow-lg border-0 rounded-0 rounded-md-4 h-100 overflow-hidden stats-card-gradient-3">
+                        <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
+                            <div class="avatar avatar-lg bg-info rounded-circle mb-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                                <i class="ti ti-wallet text-white fs-2"></i>
                             </div>
                             <div>
-                                <p class="text-muted mb-0 small fw-bold text-uppercase letter-spacing-1">Wallet Balance</p>
+                                <p class="text-muted mb-1 small fw-bold text-uppercase letter-spacing-1">Wallet Balance</p>
                                 <h3 class="mb-0 fw-black text-info">₦{{ number_format(auth()->user()->wallet->balance ?? 0, 0) }}</h3>
                             </div>
                         </div>
@@ -541,9 +651,9 @@
         </div>
 
         {{-- My Created Cards Section --}}
-        <div class="history-wrapper-responsive mb-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-header bg-white border-bottom pt-4 pb-3 px-4">
+        <div class="mb-4">
+            <div class="card shadow-lg border-0 rounded-0 rounded-md-4 overflow-hidden">
+                <div class="card-header rounded-0 rounded-top-md-4 bg-white border-bottom pt-4 pb-3 px-4">
                     <h5 class="fw-bold d-flex align-items-center gap-2 mb-0">
                         <i class="ti ti-gift text-primary"></i> Cards I've Generated
                     </h5>
@@ -555,7 +665,8 @@
                             <table class="table table-hover align-middle mb-0 text-nowrap">
                                 <thead class="table-light text-muted small">
                                     <tr>
-                                        <th class="fw-bold text-uppercase px-4">Card Title</th>
+                                        <th class="fw-bold text-uppercase px-4" style="width: 50px;">S/N</th>
+                                        <th class="fw-bold text-uppercase">Card Title</th>
                                         <th class="fw-bold text-uppercase">Value</th>
                                         <th class="fw-bold text-uppercase">Style</th>
                                         <th class="fw-bold text-uppercase">Status</th>
@@ -566,7 +677,8 @@
                                 <tbody>
                                     @foreach($createdCards as $card)
                                         <tr>
-                                            <td class="px-4">
+                                            <td class="px-4 text-muted small fw-bold">{{ $loop->iteration }}</td>
+                                            <td>
                                                 <div class="fw-bold text-dark">{{ $card->title }}</div>
                                             </td>
                                             <td class="fw-bold text-dark fs-15">₦{{ number_format($card->amount) }}</td>
@@ -663,7 +775,7 @@
 
                         {{-- Pagination for Created Cards --}}
                         @if($createdCards->hasPages())
-                            <div class="pagination-container d-flex justify-content-center">
+                            <div class="pagination-container justify-content-center {{ $isFiltered ? 'd-flex' : 'd-none d-md-flex' }}">
                                 {{ $createdCards->appends(['redeemed_page' => $redeemedCards->currentPage()])->links('pagination::bootstrap-5') }}
                             </div>
                         @endif
@@ -769,9 +881,9 @@
         </div>
 
         {{-- My Redeemed Cards Section --}}
-        <div class="history-wrapper-responsive">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-header bg-white border-bottom pt-4 pb-3 px-4">
+        <div class="mt-2 mt-md-0">
+            <div class="card shadow-lg border-0 rounded-0 rounded-md-4 overflow-hidden">
+                <div class="card-header rounded-0 rounded-top-md-4 bg-white border-bottom pt-4 pb-3 px-4">
                     <h5 class="fw-bold d-flex align-items-center gap-2 mb-0">
                         <i class="ti ti-wallet text-success"></i> Cards I've Redeemed
                     </h5>
@@ -783,7 +895,8 @@
                             <table class="table table-hover align-middle mb-0 text-nowrap">
                                 <thead class="table-light text-muted small">
                                     <tr>
-                                        <th class="fw-bold text-uppercase px-4">Card Title</th>
+                                        <th class="fw-bold text-uppercase px-4" style="width: 50px;">S/N</th>
+                                        <th class="fw-bold text-uppercase">Card Title</th>
                                         <th class="fw-bold text-uppercase">Card Value</th>
                                         <th class="fw-bold text-uppercase">Generated By</th>
                                         <th class="fw-bold text-uppercase pe-4">Redeemed Date</th>
@@ -792,7 +905,8 @@
                                 <tbody>
                                     @foreach($redeemedCards as $card)
                                         <tr>
-                                            <td class="px-4">
+                                            <td class="px-4 text-muted small fw-bold">{{ $loop->iteration }}</td>
+                                            <td>
                                                 <div class="fw-bold text-dark">{{ $card->title }}</div>
                                             </td>
                                             <td class="fw-bold text-success">+₦{{ number_format($card->amount) }}</td>
@@ -849,7 +963,7 @@
 
                         {{-- Pagination for Redeemed Cards --}}
                         @if($redeemedCards->hasPages())
-                            <div class="pagination-container d-flex justify-content-center">
+                            <div class="pagination-container justify-content-center {{ $isFiltered ? 'd-flex' : 'd-none d-md-flex' }}">
                                 {{ $redeemedCards->appends(['created_page' => $createdCards->currentPage()])->links('pagination::bootstrap-5') }}
                             </div>
                         @endif

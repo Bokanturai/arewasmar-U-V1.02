@@ -61,9 +61,9 @@ class CableController extends Controller
         // 2. If not in DB, fetch from API
         try {
             $response = Http::withHeaders([
-                'api-key'    => env('API_KEY'),
-                'secret-key' => env('SECRET_KEY'),
-            ])->get(env('VARIATION_URL') . $serviceId);
+                'api-key'    => config('services.vtpass.api_key'),
+                'secret-key' => config('services.vtpass.secret_key'),
+            ])->get(config('services.vtpass.variation_url') . $serviceId);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -115,9 +115,9 @@ class CableController extends Controller
 
         try {
             $response = Http::withHeaders([
-                'api-key'    => env('API_KEY'),
-                'secret-key' => env('SECRET_KEY'),
-            ])->post(env('BASE_URL', 'https://sandbox.vtpass.com/api') . '/merchant-verify', [
+                'api-key'    => config('services.vtpass.api_key'),
+                'secret-key' => config('services.vtpass.secret_key'),
+            ])->post(config('services.vtpass.base_url', 'https://sandbox.vtpass.com/api') . '/merchant-verify', [
                 'serviceID'   => $request->service_id,
                 'billersCode' => $request->billersCode,
             ]);
@@ -169,7 +169,7 @@ class CableController extends Controller
         $requestId = RequestIdHelper::generateRequestId();
         $amount = $request->amount;
 
-        $wallet = Wallet::where('user_id', $user->id)->first();
+        $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first();
         if (!$wallet || $wallet->balance < $amount) {
             return back()->with('error', 'Insufficient wallet balance.');
         }
@@ -234,9 +234,9 @@ class CableController extends Controller
             }
 
             $response = Http::withHeaders([
-                'api-key'    => env('API_KEY'),
-                'secret-key' => env('SECRET_KEY'),
-            ])->post(env('MAKE_PAYMENT'), $payload);
+                'api-key'    => config('services.vtpass.api_key'),
+                'secret-key' => config('services.vtpass.secret_key'),
+            ])->post(config('services.vtpass.payment_url'), $payload);
 
             if ($response->successful()) {
                 $result = $response->json();
